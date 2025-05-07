@@ -8,6 +8,22 @@
     <string name="action_settings">Settings</string>
 
     <string name="menu_home">Home</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_goals">Goals</string>
+    <string-array name="objetivos_array">
+        <item>Perder grasa</item>
+        <item>Mantener peso</item>
+        <item>Ganar masa muscular</item>
+    </string-array>
+
+    <string-array name="actividad_array">
+        <item>Sedentario</item>
+        <item>Ligero</item>
+        <item>Moderado</item>
+        <item>Activo</item>
+        <item>Muy activo</item>
+    </string-array>
+    <string-array name="generos">
+        <item>Masculino</item>
+        <item>Femenino</item>
+    </string-array>
 </resources>
