@@ -63,7 +63,8 @@
         android:orientation="horizontal"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="100dp">
 
         <!-- Indicador circular de calorías -->
         <com.google.android.material.progressindicator.CircularProgressIndicator
@@ -109,6 +110,7 @@
 
                 <!-- Proteínas -->
                 <TextView
+                    android:id="@+id/proteinas"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Proteínas: 27 / 123 g"
@@ -125,6 +127,7 @@
 
                 <!-- Carbs -->
                 <TextView
+                    android:id="@+id/carbohidratos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Carbs: 38 / 187 g"
@@ -141,6 +144,7 @@
 
                 <!-- Grasas -->
                 <TextView
+                    android:id="@+id/grasas"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Grasas: 15 / 55 g"
@@ -190,11 +194,6 @@
             android:padding="8dp"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_egg"
-                android:contentDescription="Huevo"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -212,11 +211,6 @@
             android:padding="8dp"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_bread"
-                android:contentDescription="Pan"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -235,11 +229,6 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="24dp">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_milk"
-                android:contentDescription="Leche"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -248,6 +237,11 @@
                 android:textColor="#000000"
                 android:layout_marginStart="12dp"/>
         </LinearLayout>
+        <Button
+            android:id="@+id/addbreakfast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="+"/>
     </LinearLayout>
 
     <!-- Sección Almuerzo -->
@@ -281,11 +275,6 @@
             android:padding="8dp"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_chicken"
-                android:contentDescription="Pollo"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -303,11 +292,6 @@
             android:padding="8dp"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_quinoa"
-                android:contentDescription="Quinoa"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -326,11 +310,6 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="16dp">
 
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_salad"
-                android:contentDescription="Ensalada"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -339,6 +318,11 @@
                 android:textColor="#000000"
                 android:layout_marginStart="12dp"/>
         </LinearLayout>
+        <Button
+            android:id="@+id/addlunch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="+"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
