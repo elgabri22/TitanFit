@@ -1,5 +1,4 @@
-```xml
-    <?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -10,12 +9,59 @@
     android:background="#FFFFFF"
     tools:theme="@style/Theme.MaterialComponents.Light.NoActionBar">
 
+    <LinearLayout
+        android:id="@+id/llCalendarHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingVertical="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Flecha izquierda -->
+        <ImageButton
+            android:id="@+id/btnPreviousDay"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/atras"
+            android:contentDescription="Día anterior"
+            app:tint="#FFB300"/>
+
+        <!-- Día en el centro -->
+        <TextView
+            android:id="@+id/tvCurrentDay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lunes 07"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="18sp"
+            android:layout_marginHorizontal="16dp"/>
+
+        <!-- Flecha derecha -->
+        <ImageButton
+            android:id="@+id/btnNextDay"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/atras"
+            android:rotation="180"
+            android:contentDescription="Día siguiente"
+            app:tint="#FFB300"/>
+    </LinearLayout>
+
+
+
     <!-- Contenedor principal: indicador + detalles -->
     <LinearLayout
         android:id="@+id/llTopSection"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:layout_marginTop="50dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -64,6 +110,7 @@
 
                 <!-- Proteínas -->
                 <TextView
+                    android:id="@+id/proteinas"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Proteínas: 27 / 123 g"
@@ -80,6 +127,7 @@
 
                 <!-- Carbs -->
                 <TextView
+                    android:id="@+id/carbohidratos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Carbs: 38 / 187 g"
@@ -96,6 +144,7 @@
 
                 <!-- Grasas -->
                 <TextView
+                    android:id="@+id/grasas"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Grasas: 15 / 55 g"
@@ -137,72 +186,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Huevo -->
-        <LinearLayout
+        <Button
+            android:id="@+id/addbreakfast"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_egg"
-                android:contentDescription="Huevo"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Huevo (entero): 2 unidades"
-                android:textSize="14sp"
-                android:textColor="#000000"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
-
-        <!-- Pan -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_bread"
-                android:contentDescription="Pan"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pan: 2 rebanadas"
-                android:textSize="14sp"
-                android:textColor="#000000"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
-
-        <!-- Leche -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_milk"
-                android:contentDescription="Leche"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Leche: 1 vaso"
-                android:textSize="14sp"
-                android:textColor="#000000"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
+            android:text="+" />
     </LinearLayout>
 
     <!-- Sección Almuerzo -->
@@ -227,73 +215,11 @@
         app:layout_constraintTop_toBottomOf="@id/tvLunchHeader"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
-        <!-- Pollo -->
-        <LinearLayout
+        <Button
+            android:id="@+id/addlunch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_chicken"
-                android:contentDescription="Pollo"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pollo: 150 g"
-                android:textSize="14sp"
-                android:textColor="#000000"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
-
-        <!-- Quinoa -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_quinoa"
-                android:contentDescription="Quinoa"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Quínoa: 100 g"
-                android:textSize="14sp"
-                android:textColor="#000000"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
-
-        <!-- Ensalada -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-
-            <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_salad"
-                android:contentDescription="Ensalada"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ensalada de Verduras: ½ plato"
-                android:textSize="14sp"
-                android:textColor="#000000"
-                android:layout_marginStart="12dp"/>
-        </LinearLayout>
+            android:text="+" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

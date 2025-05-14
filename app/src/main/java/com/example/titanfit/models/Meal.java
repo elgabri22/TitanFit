@@ -10,19 +10,21 @@ public class Meal {
     private double protein;
     private double carbs;
     private double fats;
-    private List<String> ingredients;
+    private String tipo;
+    private String fecha;
 
     // Constructor vacío
     public Meal() {}
 
-    public Meal(String id, String name, int calories, double protein, double carbs, double fats, List<String> ingredients) {
+    public Meal(String id, String name, int calories, double protein, double carbs, double fats,String tipo,String fecha) {
         this.id = id;
         this.name = name;
         this.calories = calories;
         this.protein = protein;
         this.carbs = carbs;
         this.fats = fats;
-        this.ingredients = ingredients;
+        this.tipo=tipo;
+        this.fecha=fecha;
     }
 
     public String getId() {
@@ -73,13 +75,27 @@ public class Meal {
         this.fats = fats;
     }
 
-    public List<String> getIngredients() {
-        return ingredients;
+    public String getTipo() {
+        return tipo;
     }
 
-    public void setIngredients(List<String> ingredients) {
-        this.ingredients = ingredients;
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     // Getters y Setters
+
+    @Override
+    public String toString() {
+        return "Meal{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", calories=" + calories +
+                ", protein=" + protein +
+                ", carbs=" + carbs +
+                ", fats=" + fats +
+                ", tipo='" + tipo + '\'' +
+                ", fecha='" + fecha + '\'' +
+                '}';
+    }
 }

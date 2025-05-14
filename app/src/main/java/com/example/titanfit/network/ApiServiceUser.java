@@ -1,5 +1,6 @@
 package com.example.titanfit.network;
 
+import com.example.titanfit.models.Meal;
 import com.example.titanfit.models.User;
 
 import java.util.List;
@@ -16,4 +17,7 @@ public interface ApiServiceUser {
 
     @GET("api/users/{id}")
     Call<User> getUser(@Path("id") String id);
+
+    @GET("meals/{fecha}")
+    Call<List<Meal>> getMeals(@Path("fecha") String fecha);
 }

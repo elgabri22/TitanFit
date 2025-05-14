@@ -14,7 +14,6 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().hide();
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_splash);
         new Handler().postDelayed(new Runnable() {

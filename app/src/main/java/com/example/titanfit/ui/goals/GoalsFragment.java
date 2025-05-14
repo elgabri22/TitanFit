@@ -105,8 +105,10 @@ public class GoalsFragment extends Fragment {
                     public void onResponse(Call<User> call, Response<User> response) {
                         if (response.isSuccessful()) {
                             Toast.makeText(requireContext(), "Usuario creado correctamente", Toast.LENGTH_LONG).show();
+                            Bundle bundle=new Bundle();
+                            bundle.putSerializable("user",user);
                             NavController navController = NavHostFragment.findNavController(GoalsFragment.this);
-                            navController.navigate(R.id.action_goals_to_main);
+                            navController.navigate(R.id.action_goals_to_main,bundle);
                         }
                     }
 
