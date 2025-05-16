@@ -29,6 +29,7 @@ import com.example.titanfit.models.Meal;
 import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceUser;
+import com.example.titanfit.ui.dialogs.DialogAddComida;
 import com.example.titanfit.ui.goals.GoalsFragment;
 import com.example.titanfit.ui.home.HomeFragment;
 import com.example.titanfit.ui.home.HomeViewModel;
@@ -72,6 +73,9 @@ public class MainFragment extends Fragment {
                 binding.proteinas.setText("Proteinas: " + 0 + "/" + Math.round(user.getGoals().getProteinPercentage())+"g");
                 binding.carbohidratos.setText("Carbohidratos: " + 0 + "/" + Math.round(user.getGoals().getCarbsPercentage())+"g");
                 binding.grasas.setText("Grasas: " + 0 + "/" + Math.round(user.getGoals().getFatsPercentage())+"g");
+                binding.cpiCalories.setMax(user.getGoals().getDailyCalories());
+                binding.cpiCalories.setMin(0);
+                binding.cpiCalories.setProgress(0);
             }
         }
         calendar = Calendar.getInstance();
@@ -236,7 +240,8 @@ public class MainFragment extends Fragment {
         binding.addbreakfast.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                DialogAddComida dialog=new DialogAddComida();
+                dialog.show(requireActivity().getSupportFragmentManager(), "DialogAddComida");
             }
         });
         binding.addlunch.setOnClickListener(new View.OnClickListener() {

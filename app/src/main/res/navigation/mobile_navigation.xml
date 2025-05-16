@@ -14,6 +14,9 @@
         <action
             android:id="@+id/action_home_to_goals"
             app:destination="@id/goals" />
+        <action
+            android:id="@+id/action_login"
+            app:destination="@id/login" />
     </fragment>
 
     <fragment
@@ -29,7 +32,17 @@
         android:id="@+id/main"
         android:name="com.example.titanfit.ui.main.MainFragment"
         android:label="Goals"
-        tools:layout="@layout/fragment_goals" />
+        tools:layout="@layout/fragment_goals">
+    </fragment>
+    <fragment
+        android:id="@+id/login"
+        android:name="com.example.titanfit.ui.login.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_login_to_main"
+            app:destination="@id/main" />
+    </fragment>
 
 
 </navigation>

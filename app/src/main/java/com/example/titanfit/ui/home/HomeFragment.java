@@ -36,6 +36,12 @@ public class HomeFragment extends Fragment {
                 navController.navigate(R.id.action_home_to_goals);
             }
         });
+        binding.loginLink.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                navController.navigate(R.id.action_login);
+            }
+        });
         return root;
     }
 

@@ -15,6 +15,7 @@ public class User implements Serializable {
     private double height;
     private List<Meal> meals; // Listado de comidas
     private UserGoal goals;
+    private String token;
 
     // Constructor vacío
     public User() {
@@ -23,7 +24,7 @@ public class User implements Serializable {
 
 
 
-    public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meals) {
+    public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meals,String token) {
         this.id=null;
         this.name = name;
         this.email = email;
@@ -33,6 +34,20 @@ public class User implements Serializable {
         this.height = height;
         this.goals = goals;
         this.meals = meals;
+        this.token= token;
+    }
+
+    public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meal) {
+        this.id=null;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.age = age;
+        this.weight = weight;
+        this.height = height;
+        this.goals = goals;
+        this.meals = meals;
+        this.token= "";
     }
 
     // Getters y Setters
@@ -107,5 +122,13 @@ public class User implements Serializable {
 
     public void setMeals(List<Meal> meals) {
         this.meals = meals;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }
