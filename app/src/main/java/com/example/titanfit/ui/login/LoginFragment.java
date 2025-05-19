@@ -32,6 +32,7 @@ import com.example.titanfit.ui.home.HomeFragment;
 
 import java.util.List;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -75,38 +76,18 @@ public class LoginFragment extends Fragment {
                     @Override
                     public void onResponse(Call<User> call, Response<User> response) {
                         if (response.isSuccessful() && response.body() != null) {
-                            User fetchedUser = response.body();
-                            Call<String> tokenCall = apiService.generateToken(fetchedUser);
-                            tokenCall.enqueue(new Callback<String>() {
+                            User fetchedUser = (User) response.body();
+                            Log.d("user",fetchedUser.toString());
+                            Call<ResponseBody> tokenCall = apiService.generateToken(fetchedUser);
+                            tokenCall.enqueue(new Callback<ResponseBody>() {
                                 @Override
-                                public void onResponse(Call<String> call, Response<String> response) {
-                                    if (response.isSuccessful() && response.body() != null) {
-                                        String token = response.body();
-                                        fetchedUser.setToken(token);
-                                        Call<User> updateUserCall1 = apiService.updateUser(fetchedUser); // Crear una nueva variable
-                                        updateUserCall1.enqueue(new Callback<User>() { // Usar la nueva variable
-                                            @Override
-                                            public void onResponse(Call<User> call, Response<User> response) {
-                                                if (response.isSuccessful() && response.body() != null) {
-                                                    Toast.makeText(requireContext(),"Usuario logueado correctamente",Toast.LENGTH_LONG).show();
-                                                    navController.navigate(R.id.action_login_to_main);
-                                                } else {
-                                                    Log.d(TAG, "Error al actualizar el usuario. Código: " + response.code()); // Mensaje de log correcto
-                                                }
-                                            }
-
-                                            @Override
-                                            public void onFailure(Call<User> call, Throwable t) {
-                                                Log.e(TAG, "Error al actualizar el usuario: " + t.getMessage()); // Mensaje de log correcto
-                                            }
-                                        });
-                                    } else {
-                                        Log.d(TAG, "Error al generar el token. Código: " + response.code());
-                                    }
+                                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                    Toast.makeText(requireContext(),"Usuario logueado correctamente",Toast.LENGTH_LONG).show();
+                                    navController.navigate(R.id.action_login_to_main);
                                 }
 
                                 @Override
-                                public void onFailure(Call<String> call, Throwable t) {
+                                public void onFailure(Call<ResponseBody> call, Throwable t) {
                                     Log.e(TAG, "Error al generar el token: " + t.getMessage());
                                 }
                             });

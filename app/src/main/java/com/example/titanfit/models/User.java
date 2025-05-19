@@ -131,4 +131,20 @@ public class User implements Serializable {
     public void setToken(String token) {
         this.token = token;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", age=" + age +
+                ", weight=" + weight +
+                ", height=" + height +
+                ", meals=" + meals +
+                ", goals=" + goals +
+                ", token='" + token + '\'' +
+                '}';
+    }
 }

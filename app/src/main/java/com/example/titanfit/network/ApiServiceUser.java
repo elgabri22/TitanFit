@@ -6,6 +6,7 @@ import com.example.titanfit.models.User;
 import java.util.List;
 import java.util.Objects;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -23,7 +24,7 @@ public interface ApiServiceUser {
     Call<List<Meal>> getMeals(@Path("fecha") String fecha);
 
     @POST("auth/generateToken")
-    Call<String> generateToken(@Body User user);
+    Call<ResponseBody> generateToken(@Body User user);
     @POST("user/update")
     Call<User> updateUser(@Body User user);
 }

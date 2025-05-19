@@ -25,10 +25,8 @@
             android:id="@+id/btnPreviousDay"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/atras"
-            android:contentDescription="Día anterior"
-            app:tint="#FFB300"/>
+            android:src="@drawable/comida"
+            android:contentDescription="Día anterior"/>
 
         <!-- Día en el centro -->
         <TextView
@@ -47,7 +45,7 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/atras"
+            android:src="@drawable/comida"
             android:rotation="180"
             android:contentDescription="Día siguiente"
             app:tint="#FFB300"/>
