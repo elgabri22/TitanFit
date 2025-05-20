@@ -4,6 +4,8 @@ import static android.content.ContentValues.TAG;
 
 import androidx.lifecycle.ViewModelProvider;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -28,7 +30,9 @@ import com.example.titanfit.models.Meal;
 import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceUser;
+import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.home.HomeFragment;
+import com.google.gson.Gson;
 
 import java.util.List;
 
@@ -41,10 +45,13 @@ public class LoginFragment extends Fragment {
 
     private LoginViewModel mViewModel;
     private FragmentLoginBinding binding;
+    private SharedPreferencesManager sharedPreferences;
+    private Gson gson;
 
-    public static LoginFragment newInstance() {
-        return new LoginFragment();
+
+    public LoginFragment() {
     }
+
 
     @Nullable
     @Override
@@ -52,6 +59,10 @@ public class LoginFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentLoginBinding.inflate(inflater, container, false);
         View view = binding.getRoot();
+
+        sharedPreferences=new SharedPreferencesManager(requireContext());
+
+        gson = new Gson(); // Inicializar Gson
 
         NavController navController = NavHostFragment.findNavController(LoginFragment.this);
 
@@ -84,6 +95,7 @@ public class LoginFragment extends Fragment {
                                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                                     Toast.makeText(requireContext(),"Usuario logueado correctamente",Toast.LENGTH_LONG).show();
                                     navController.navigate(R.id.action_login_to_main);
+                                    sharedPreferences.saveUser(fetchedUser);
                                 }
 
                                 @Override

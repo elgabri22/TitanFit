@@ -1,30 +1,27 @@
 package com.example.titanfit.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 import android.view.Menu;
-
-import com.example.titanfit.R;
-import com.example.titanfit.databinding.ContentMainBinding;
-import com.example.titanfit.ui.goals.GoalsFragment;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.navigation.NavigationView;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.AppCompatActivity;
-
+import androidx.navigation.NavOptions; // ¡Asegúrate de tener esta importación!
+import com.example.titanfit.R;
 import com.example.titanfit.databinding.ActivityMainBinding;
+import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
+    private NavController navController;
+
+    public static final String EXTRA_NAV_DESTINATION = "nav_destination";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,40 +31,101 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.appBarMain.toolbar);
-        binding.appBarMain.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null)
-                        .setAnchorView(R.id.fab).show();
-            }
-        });
+
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home)
-                .setOpenableLayout(drawer)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-        NavigationUI.setupWithNavController(navigationView, navController);
 
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment_content_main);
 
+        if (navHostFragment != null) {
+            navController = navHostFragment.getNavController();
+
+            mAppBarConfiguration = new AppBarConfiguration.Builder(R.id.main, R.id.home, R.id.goals)
+                    .setOpenableLayout(drawer)
+                    .build();
+
+            NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+            NavigationUI.setupWithNavController(navigationView, navController);
+
+            // *******************************************************************
+            // CAMBIO CLAVE AQUÍ: Usar binding.getRoot().post()
+            // Esto retrasa la ejecución de handleIntentNavigation hasta que
+            // el layout esté completamente inflado y el NavController listo.
+            // *******************************************************************
+            binding.getRoot().post(() -> {
+                Log.d("MainActivity", "Post-layout: Llamando a handleIntentNavigation.");
+                handleIntentNavigation(getIntent());
+            });
+
+        } else {
+            Log.e("MainActivity", "ERROR: NavHostFragment no encontrado. Revisa tu layout XML.");
+        }
+    }
+
+    private void handleIntentNavigation(Intent intent) {
+        // Una verificación extra para 'navController' por si acaso,
+        // aunque con .post() debería ser menos probable que sea null.
+        if (navController == null) {
+            Log.e("MainActivity", "NavController es null en handleIntentNavigation (después de post). No se puede navegar.");
+            return;
+        }
+
+        if (intent != null && intent.getExtras() != null) {
+            Bundle bundle = intent.getExtras();
+            int destinationId = bundle.getInt(EXTRA_NAV_DESTINATION, 0);
+
+            if (destinationId != 0 && destinationId != -1) {
+                try {
+                    // Evitar navegar si el destino ya es el destino actual
+                    // Ahora sí es seguro llamar a getCurrentDestination() porque estamos en .post()
+                    if (navController.getCurrentDestination() == null ||
+                            navController.getCurrentDestination().getId() != destinationId) {
+
+                        // Opciones de navegación para limpiar la pila al ir a Login o Home
+                        NavOptions navOptions = null;
+                        if (destinationId == R.id.login || destinationId == R.id.home) {
+                            // Se puede usar try-catch aquí también para getGraph().getStartDestinationId()
+                            // aunque es muy poco probable que falle si el NavController está inicializado.
+                            try {
+                                navOptions = new NavOptions.Builder()
+                                        .setPopUpTo(navController.getGraph().getStartDestinationId(), true) // Pop up to start destination, inclusive
+                                        .build();
+                            } catch (IllegalStateException e) {
+                                Log.e("MainActivity", "Error obteniendo el ID de startDestination: " + e.getMessage());
+                                // Si hay un error aquí, la navegación se hará sin popUpTo
+                            }
+                        }
+
+                        navController.navigate(destinationId, null, navOptions);
+                        Log.d("MainActivity", "Navegando a destino ID: " + getResources().getResourceEntryName(destinationId));
+                    } else {
+                        Log.d("MainActivity", "Ya estamos en el destino " + getResources().getResourceEntryName(destinationId));
+                    }
+                } catch (IllegalArgumentException e) {
+                    Log.e("MainActivity", "ID de destino de navegación no válido: " + destinationId, e);
+                    // Esto ocurre si el ID no existe en tu nav_graph.xml
+                }
+            } else {
+                Log.d("MainActivity", "No se encontró un ID de navegación válido en el Intent.");
+            }
+        } else {
+            Log.d("MainActivity", "Intent o sus extras son nulos. El NavController cargará el startDestination por defecto.");
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
+        if (navController != null) {
+            return NavigationUI.navigateUp(navController, mAppBarConfiguration)
+                    || super.onSupportNavigateUp();
+        }
+        return super.onSupportNavigateUp();
     }
 }

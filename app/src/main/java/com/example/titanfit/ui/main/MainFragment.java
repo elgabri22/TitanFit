@@ -4,6 +4,8 @@ import static android.content.ContentValues.TAG;
 
 import androidx.lifecycle.ViewModelProvider;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -16,6 +18,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -29,10 +32,13 @@ import com.example.titanfit.models.Meal;
 import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceUser;
+import com.example.titanfit.ui.MainActivity;
+import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.dialogs.DialogAddComida;
 import com.example.titanfit.ui.goals.GoalsFragment;
 import com.example.titanfit.ui.home.HomeFragment;
 import com.example.titanfit.ui.home.HomeViewModel;
+import com.google.android.material.navigation.NavigationView;
 
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
@@ -48,11 +54,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainFragment extends Fragment {
+public class MainFragment extends Fragment implements NavigationView.OnNavigationItemSelectedListener{
 
     private MainViewModel mViewModel;
     private FragmentMainBinding binding;
     private Calendar calendar;
+    private SharedPreferencesManager manager;
+    private Context context;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -65,6 +73,7 @@ public class MainFragment extends Fragment {
 
         binding = FragmentMainBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+        context=requireContext();
         Bundle args = getArguments();
         if (args != null) {
             User user = (User) args.getSerializable("user");
@@ -268,4 +277,36 @@ public class MainFragment extends Fragment {
         // TODO: Use the ViewModel
     }
 
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.nav_cerrar_sesion) {
+            manager=new SharedPreferencesManager(requireContext());
+            manager.clearUser();
+            Toast.makeText(requireContext(), "Cerrando sesión desde Fragment...", Toast.LENGTH_SHORT).show();
+            // Perform logout logic here, similar to the MainActivity example
+            // You'd still need an Intent to go to LoginActivity and clear tasks
+            Intent intent = new Intent(requireActivity(), MainActivity.class); // Assuming LoginActivity
+            startActivity(intent);
+            requireActivity().finish();
+
+        }
+        return false;
+    }
+
+    private void updateNavHeader(NavigationView navigationView) {
+        View headerView = navigationView.getHeaderView(0); // Get the first header view
+
+        //TextView navUserName = headerView.findViewById(R.id.nav_header_name);
+        //TextView navUserEmail = headerView.findViewById(R.id.nav_header_email);
+
+        // Retrieve data from SharedPreferencesManager
+        //String userName = manager.getUserName();
+        //String userEmail = manager.getUserEmail();
+
+        // Set the retrieved data to the TextViews
+        //navUserName.setText(userName);
+        //navUserEmail.setText(userEmail);
+    }
 }
