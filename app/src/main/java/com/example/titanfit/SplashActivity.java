@@ -17,7 +17,7 @@ public class SplashActivity extends AppCompatActivity {
     private SharedPreferencesManager manager;
     public static final String EXTRA_NAV_DESTINATION = "nav_destination";
     public static final int DESTINATION_MAIN_FRAGMENT = R.id.main; // ID de tu MainFragment en nav_graph
-    public static final int DESTINATION_LOGIN_FRAGMENT = R.id.login; // ID de tu LoginFragment en nav_graph
+    public static final int DESTINATION_HOME_FRAGMENT = R.id.home; // ID de tu LoginFragment en nav_graph
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,23 +25,29 @@ public class SplashActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_splash);
         manager = new SharedPreferencesManager(this);
-        if (manager.isLoggedIn()){
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (manager.isLoggedIn()) {
-                        Intent intent = new Intent(SplashActivity.this, MainActivity.class);
-                        intent.putExtra(EXTRA_NAV_DESTINATION, DESTINATION_MAIN_FRAGMENT);
-                        Log.d("si","si");
-                        startActivity(intent);
-                    }else{
-                        Intent intent2 = new Intent(SplashActivity.this, MainActivity.class);
-                        startActivity(intent2);
-                    }
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+                int destinationId;
 
-                    finish();
+                if (manager.isLoggedIn()) {
+                    // Si el usuario está logueado, ir al fragmento principal
+                    destinationId = DESTINATION_MAIN_FRAGMENT;
+                    Log.d("SplashActivity", "Usuario logueado. Navegando a MainFragment.");
+                } else {
+                    // Si el usuario NO está logueado, ir al fragmento de login
+                    destinationId = DESTINATION_HOME_FRAGMENT;
+                    Log.d("SplashActivity", "Usuario NO logueado. Navegando a LoginFragment.");
                 }
-            }, 2000);
-        }
+
+                // Pasa el ID del destino a MainActivity
+                intent.putExtra(EXTRA_NAV_DESTINATION, destinationId);
+                startActivity(intent);
+
+                // Finaliza SplashActivity para que el usuario no pueda volver a ella con el botón atrás
+                finish();
+            }
+        }, 2000);
     }
 }

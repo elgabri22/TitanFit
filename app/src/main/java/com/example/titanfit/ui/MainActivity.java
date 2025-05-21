@@ -4,6 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
@@ -41,18 +45,45 @@ public class MainActivity extends AppCompatActivity {
         if (navHostFragment != null) {
             navController = navHostFragment.getNavController();
 
-            mAppBarConfiguration = new AppBarConfiguration.Builder(R.id.main, R.id.home, R.id.goals)
+            mAppBarConfiguration = new AppBarConfiguration.Builder(R.id.main)
                     .setOpenableLayout(drawer)
                     .build();
 
             NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
             NavigationUI.setupWithNavController(navigationView, navController);
 
+            navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+                @Override
+                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+
+                    drawer.close();
+
+                    // Maneja la selección del ítem del menú
+                    int id = item.getItemId();
+
+                    if (id == R.id.nav_cerrar_sesion) {
+                        Log.d("MainActivity", "Cerrar sesión seleccionado.");
+                        NavOptions navOptions = new NavOptions.Builder()
+                                .setPopUpTo(R.id.mobile_navigation, true)
+                                .build();
+                        navController.navigate(R.id.home, null, navOptions);
+                        SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(getApplicationContext());
+                        sharedPreferencesManager.clearUser();
+                        Toast.makeText(getApplicationContext(),"Sesión cerrada correctamente",Toast.LENGTH_LONG).show();
+
+                        return true;
+                    } else {
+                        return NavigationUI.onNavDestinationSelected(item, navController);
+                    }
+                }
+            });
             // *******************************************************************
-            // CAMBIO CLAVE AQUÍ: Usar binding.getRoot().post()
-            // Esto retrasa la ejecución de handleIntentNavigation hasta que
-            // el layout esté completamente inflado y el NavController listo.
-            // *******************************************************************
+
+            binding.getRoot().post(() -> {
+                Log.d("MainActivity", "Post-layout: Llamando a handleIntentNavigation.");
+                handleIntentNavigation(getIntent());
+            });
+
             binding.getRoot().post(() -> {
                 Log.d("MainActivity", "Post-layout: Llamando a handleIntentNavigation.");
                 handleIntentNavigation(getIntent());

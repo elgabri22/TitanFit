@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:gravity="center_vertical">
+
+    <ImageView
+        android:id="@+id/imageViewComida"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/atras"
+        android:layout_marginEnd="16dp"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textViewNombreComida"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:text="Nombre de Comida" />
+
+        <TextView
+            android:id="@+id/textViewTipoComida"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginTop="4dp"
+            android:text="Genérico" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btnadd"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginLeft="100dp"
+            android:text="+" />
+
+        <TextView
+            android:id="@+id/tipo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:layout_marginLeft="50dp"
+            android:textColor="@android:color/holo_blue_dark"
+            android:text="Salsas y Condimentos"
+            />
+    </LinearLayout>
+
+    </LinearLayout>
+
+

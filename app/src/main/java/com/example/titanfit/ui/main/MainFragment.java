@@ -54,7 +54,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainFragment extends Fragment implements NavigationView.OnNavigationItemSelectedListener{
+public class MainFragment extends Fragment{
 
     private MainViewModel mViewModel;
     private FragmentMainBinding binding;
@@ -75,6 +75,7 @@ public class MainFragment extends Fragment implements NavigationView.OnNavigatio
         View root = binding.getRoot();
         context=requireContext();
         Bundle args = getArguments();
+        SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
         if (args != null) {
             User user = (User) args.getSerializable("user");
             if (user != null) {
@@ -84,7 +85,16 @@ public class MainFragment extends Fragment implements NavigationView.OnNavigatio
                 binding.grasas.setText("Grasas: " + 0 + "/" + Math.round(user.getGoals().getFatsPercentage())+"g");
                 binding.cpiCalories.setMax(user.getGoals().getDailyCalories());
                 binding.cpiCalories.setMin(0);
-                binding.cpiCalories.setProgress(0);
+            }
+        }else if (sharedPreferencesManager.isLoggedIn()){
+            User user2=sharedPreferencesManager.getUser();
+            if (user2!=null){
+                binding.tvCaloriesLabel.setText(0 + "/" + user2.getGoals().getDailyCalories()+"kcal");
+                binding.proteinas.setText("Proteinas: " + 0 + "/" + Math.round(user2.getGoals().getProteinPercentage())+"g");
+                binding.carbohidratos.setText("Carbohidratos: " + 0 + "/" + Math.round(user2.getGoals().getCarbsPercentage())+"g");
+                binding.grasas.setText("Grasas: " + 0 + "/" + Math.round(user2.getGoals().getFatsPercentage())+"g");
+                binding.cpiCalories.setMax(user2.getGoals().getDailyCalories());
+                binding.cpiCalories.setMin(0);
             }
         }
         calendar = Calendar.getInstance();
@@ -249,7 +259,10 @@ public class MainFragment extends Fragment implements NavigationView.OnNavigatio
         binding.addbreakfast.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                Bundle bundle=new Bundle();
+                bundle.putString("tipo","Desayuno");
                 DialogAddComida dialog=new DialogAddComida();
+                dialog.setArguments(bundle);
                 dialog.show(requireActivity().getSupportFragmentManager(), "DialogAddComida");
             }
         });
@@ -275,38 +288,5 @@ public class MainFragment extends Fragment implements NavigationView.OnNavigatio
         super.onActivityCreated(savedInstanceState);
         mViewModel = new ViewModelProvider(this).get(MainViewModel.class);
         // TODO: Use the ViewModel
-    }
-
-
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.nav_cerrar_sesion) {
-            manager=new SharedPreferencesManager(requireContext());
-            manager.clearUser();
-            Toast.makeText(requireContext(), "Cerrando sesión desde Fragment...", Toast.LENGTH_SHORT).show();
-            // Perform logout logic here, similar to the MainActivity example
-            // You'd still need an Intent to go to LoginActivity and clear tasks
-            Intent intent = new Intent(requireActivity(), MainActivity.class); // Assuming LoginActivity
-            startActivity(intent);
-            requireActivity().finish();
-
-        }
-        return false;
-    }
-
-    private void updateNavHeader(NavigationView navigationView) {
-        View headerView = navigationView.getHeaderView(0); // Get the first header view
-
-        //TextView navUserName = headerView.findViewById(R.id.nav_header_name);
-        //TextView navUserEmail = headerView.findViewById(R.id.nav_header_email);
-
-        // Retrieve data from SharedPreferencesManager
-        //String userName = manager.getUserName();
-        //String userEmail = manager.getUserEmail();
-
-        // Set the retrieved data to the TextViews
-        //navUserName.setText(userName);
-        //navUserEmail.setText(userEmail);
     }
 }
