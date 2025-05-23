@@ -28,6 +28,7 @@ import android.widget.Toast;
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.FragmentHomeBinding;
 import com.example.titanfit.databinding.FragmentMainBinding;
+import com.example.titanfit.models.Food;
 import com.example.titanfit.models.Meal;
 import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
@@ -261,7 +262,7 @@ public class MainFragment extends Fragment{
             public void onClick(View view) {
                 Bundle bundle=new Bundle();
                 bundle.putString("tipo","Desayuno");
-                DialogAddComida dialog=new DialogAddComida();
+                DialogAddComida dialog=new DialogAddComida(new ArrayList<Food>(),requireActivity().getSupportFragmentManager());
                 dialog.setArguments(bundle);
                 dialog.show(requireActivity().getSupportFragmentManager(), "DialogAddComida");
             }
@@ -269,7 +270,11 @@ public class MainFragment extends Fragment{
         binding.addlunch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                Bundle bundle=new Bundle();
+                bundle.putString("tipo","Comida");
+                DialogAddComida dialog=new DialogAddComida(new ArrayList<Food>(),requireActivity().getSupportFragmentManager());
+                dialog.setArguments(bundle);
+                dialog.show(requireActivity().getSupportFragmentManager(), "DialogAddComida");
             }
         });
 

@@ -1,53 +1,50 @@
-package com.example.proyecto.adapter;
+package com.example.titanfit.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.titanfit.adapters.ViewHolderComida;
+import com.example.titanfit.R;
 import com.example.titanfit.models.Food;
-
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
 
     private List<Food> listComidas;
+    private FragmentManager fragmentManager;
 
-    // Constructor del Adapter
-    public AdapterComida(
-            List<Food> listfoods) {
-        this.listComidas = new ArrayList<>(listfoods);
+    public AdapterComida(List<Food> listfoods, FragmentManager fragmentManager) {
+        this.listComidas = (listfoods != null) ? new ArrayList<>(listfoods) : new ArrayList<>();
+        this.fragmentManager = fragmentManager;
     }
 
     @NonNull
     @Override
     public ViewHolderComida onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_partido, parent, false);
-        // Pasamos los listeners al ViewHolder para que este los use al renderizar
-        return new ViewHolderComida(view);
+                .inflate(R.layout.item_comida, parent, false);
+        return new ViewHolderComida(view, fragmentManager);
     }
 
-    // Vinculamos los datos del 'Partido' en la posición actual con el ViewHolder
     @Override
     public void onBindViewHolder(@NonNull ViewHolderComida holder, int position) {
         Food comida = listComidas.get(position);
-        holder.renderize(comida); // Llamamos al método renderize del ViewHolder
+        holder.renderize(comida);
     }
 
-    // Devuelve la cantidad de elementos en la lista
     @Override
     public int getItemCount() {
-        return listComidas.size();
+        return listComidas != null ? listComidas.size() : 0;
     }
 
     public void actualizarLista(List<Food> nuevaLista) {
         this.listComidas.clear();
-        this.listComidas.addAll(nuevaLista);
-        notifyDataSetChanged(); // Notificar que los datos han cambiado para que el RecyclerView se redibuje
+        if (nuevaLista != null) {
+            this.listComidas.addAll(nuevaLista);
+        }
+        notifyDataSetChanged();
     }
 }

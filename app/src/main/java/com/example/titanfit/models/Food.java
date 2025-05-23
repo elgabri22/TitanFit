@@ -1,6 +1,9 @@
 package com.example.titanfit.models;
 
-public class Food {
+import java.io.Serial;
+import java.io.Serializable;
+
+public class Food implements Serializable {
     private String id;
     private String name;
     private int calories;
@@ -13,7 +16,7 @@ public class Food {
     // Empty Constructor
     public Food() {}
 
-    public Food(String id, String name, int calories, double protein, double carbs, double fats,String imagen,String tipo) {
+    public Food(String name, int calories, double protein, double carbs, double fats,String imagen,String tipo) {
         this.id = id;
         this.name = name;
         this.calories = calories;
@@ -22,6 +25,20 @@ public class Food {
         this.fats = fats;
         this.imagen=imagen;
         this.tipo=tipo;
+    }
+
+    @Override
+    public String toString() {
+        return "Food{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", calories=" + calories +
+                ", protein=" + protein +
+                ", carbs=" + carbs +
+                ", fats=" + fats +
+                ", imagen='" + imagen + '\'' +
+                ", tipo='" + tipo + '\'' +
+                '}';
     }
 
     //Getters and setters
