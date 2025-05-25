@@ -84,6 +84,7 @@ public class DialogAddComida extends DialogFragment {
         recyclerViewComidas = binding.recyclerViewComidas;
         recyclerViewComidas.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new AdapterComida(new ArrayList<Food>(),fragmentManager);
+        adapter.actualizaTipo(getArguments().getString("tipo"));
         recyclerViewComidas.setAdapter(adapter);
 
         tipos = new HashMap<>();

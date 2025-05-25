@@ -15,6 +15,8 @@ import androidx.fragment.app.DialogFragment;
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.DialogComidaBinding;
 import com.example.titanfit.models.Food;
+import com.example.titanfit.models.FoodDialog;
+import com.example.titanfit.models.Meal;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceFood;
 import com.google.gson.JsonArray;
@@ -22,6 +24,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.Locale;
+
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import retrofit2.Call;
@@ -38,6 +43,7 @@ public class DialogComida extends DialogFragment {
     private static final String ARG_COMIDA = "comida";
     private static final String TAG = "DialogComida";
     private Food comida;
+    private Meal meal;
     private DialogComidaBinding binding;
     private double baseCalories, baseCarbs, baseProteins, baseFats; // Valores base por 100g
 
@@ -97,7 +103,20 @@ public class DialogComida extends DialogFragment {
 
         // Configura el botón de agregar
         binding.buttonAdd.setOnClickListener(v -> {
-            // Aquí puedes pasar los valores ajustados al cerrar el diálogo
+            String gramosStr = binding.editTextGrams.getText().toString();
+            double gramos = gramosStr.isEmpty() ? 100 : Double.parseDouble(gramosStr);
+
+            double factor = gramos / 100.0;
+            double calories = baseCalories * factor;
+            double carbs = baseCarbs * factor;
+            double proteins = baseProteins * factor;
+            double fats = baseFats * factor;
+            String tipo=getArguments().getString("tipo");
+
+            // Crear la comida (Meal)
+            Meal meal = new Meal(comida.getName(), (int)calories, proteins,carbs, fats,tipo, LocalDate.now().toString(), gramos);
+
+            FoodDialog.metecomida(meal);
             dismiss();
         });
 

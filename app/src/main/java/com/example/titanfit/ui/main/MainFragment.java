@@ -29,6 +29,7 @@ import com.example.titanfit.R;
 import com.example.titanfit.databinding.FragmentHomeBinding;
 import com.example.titanfit.databinding.FragmentMainBinding;
 import com.example.titanfit.models.Food;
+import com.example.titanfit.models.FoodDialog;
 import com.example.titanfit.models.Meal;
 import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
@@ -275,6 +276,8 @@ public class MainFragment extends Fragment{
                 DialogAddComida dialog=new DialogAddComida(new ArrayList<Food>(),requireActivity().getSupportFragmentManager());
                 dialog.setArguments(bundle);
                 dialog.show(requireActivity().getSupportFragmentManager(), "DialogAddComida");
+                Meal meal=FoodDialog.getFood();
+                binding.cpiCalories.setProgress(binding.cpiCalories.getProgress()+meal.getCalories());
             }
         });
 

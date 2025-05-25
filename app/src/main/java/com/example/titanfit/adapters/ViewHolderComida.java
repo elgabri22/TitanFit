@@ -23,7 +23,7 @@ public class ViewHolderComida extends RecyclerView.ViewHolder {
         this.fragmentManager = fragmentManager;
     }
 
-    public void renderize(Food comida) {
+    public void renderize(Food comida,String tipo) {
         if (comida == null) {
             return; // Evita excepciones si comida es null
         }
@@ -37,16 +37,19 @@ public class ViewHolderComida extends RecyclerView.ViewHolder {
                 .load(comida.getImagen())
                 .into(binding.imageViewComida);
 
-        setOnClickListeners(comida);
+        setOnClickListeners(comida,tipo);
     }
 
-    private void setOnClickListeners(final Food comida) {
+    private void setOnClickListeners(final Food comida,String tipo) {
         if (binding.btnadd != null) {
             binding.btnadd.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (fragmentManager != null && comida != null) {
+                        Bundle bundle=new Bundle();
+                        bundle.putString("tipo",tipo);
                         DialogComida dialog = DialogComida.newInstance(comida);
+                        dialog.setArguments(bundle);
                         dialog.show(fragmentManager, "DialogAddComida");
                     } else {
                         android.util.Log.e("ViewHolderComida", "FragmentManager es nulo o comida es nula");

@@ -15,6 +15,7 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
 
     private List<Food> listComidas;
     private FragmentManager fragmentManager;
+    private String tipo;
 
     public AdapterComida(List<Food> listfoods, FragmentManager fragmentManager) {
         this.listComidas = (listfoods != null) ? new ArrayList<>(listfoods) : new ArrayList<>();
@@ -32,7 +33,7 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolderComida holder, int position) {
         Food comida = listComidas.get(position);
-        holder.renderize(comida);
+        holder.renderize(comida,this.tipo);
     }
 
     @Override
@@ -46,5 +47,9 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
             this.listComidas.addAll(nuevaLista);
         }
         notifyDataSetChanged();
+    }
+
+    public void actualizaTipo(String tipo){
+        this.tipo=tipo;
     }
 }
