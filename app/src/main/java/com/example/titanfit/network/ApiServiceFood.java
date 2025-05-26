@@ -22,4 +22,10 @@ public interface ApiServiceFood {
                                @Header("x-app-key") String appKey,
                                @Body RequestBody body);
 
+    @POST("/delete/meal/{id}")
+    Call<Void> deleteMeal(@Path ("id")String id);
+
+    @POST("/add/meal")
+    Call<JsonElement> addMeal(@Body RequestBody body);
+
 }

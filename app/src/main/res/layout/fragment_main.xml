@@ -102,6 +102,7 @@
                     android:textSize="14sp"
                     android:textColor="#000000"/>
                 <ProgressBar
+                    android:id="@+id/proteinbar"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="8dp"
@@ -118,6 +119,7 @@
                     android:textSize="14sp"
                     android:textColor="#000000"/>
                 <ProgressBar
+                    android:id="@+id/carbbar"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="8dp"
@@ -134,6 +136,7 @@
                     android:textSize="14sp"
                     android:textColor="#000000"/>
                 <ProgressBar
+                    android:id="@+id/fatbar"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="8dp"

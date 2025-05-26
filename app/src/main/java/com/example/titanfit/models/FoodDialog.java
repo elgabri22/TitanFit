@@ -2,27 +2,22 @@ package com.example.titanfit.models;
 
 public class FoodDialog {
     private static Meal food;
-
-    public FoodDialog(Meal food) {
-        this.food = food;
-    }
+    private static boolean abierto;
 
     public static Meal getFood() {
         return food;
     }
 
-    public void setFood(Meal food) {
-        this.food = food;
+    public static void metecomida(Meal comida) {
+        food = comida;
+        abierto = false;
     }
 
-    public static void  metecomida(Meal comida){
-        food=comida;
+    public static boolean isAbierto() {
+        return abierto;
     }
 
-    @Override
-    public String toString() {
-        return "FoodDialog{" +
-                "food=" + food +
-                '}';
+    public static void setAbierto(boolean abierto1) {
+        abierto = abierto1;
     }
 }

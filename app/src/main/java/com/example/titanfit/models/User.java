@@ -16,6 +16,7 @@ public class User implements Serializable {
     private List<Meal> meals; // Listado de comidas
     private UserGoal goals;
     private String token;
+    private int caloriasconsumidas;
 
     // Constructor vacío
     public User() {
@@ -35,6 +36,15 @@ public class User implements Serializable {
         this.goals = goals;
         this.meals = meals;
         this.token= token;
+        this.caloriasconsumidas=0;
+    }
+
+    public int getCaloriasconsumidas() {
+        return caloriasconsumidas;
+    }
+
+    public void setCaloriasconsumidas(int caloriasconsumidas) {
+        this.caloriasconsumidas = caloriasconsumidas;
     }
 
     public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meal) {

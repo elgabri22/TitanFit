@@ -13,11 +13,12 @@ public class Meal {
     private String tipo;
     private String fecha;
     private double gramos;
+    private String foto;
 
     // Constructor vacío
     public Meal() {}
 
-    public Meal(String name, int calories, double protein, double carbs, double fats,String tipo,String fecha,double gramos) {
+    public Meal(String name, int calories, double protein, double carbs, double fats,String tipo,String fecha,double gramos,String foto) {
         this.id = id;
         this.name = name;
         this.calories = calories;
@@ -27,6 +28,7 @@ public class Meal {
         this.tipo=tipo;
         this.fecha=fecha;
         this.gramos=gramos;
+        this.foto=foto;
     }
 
     public String getFecha() {
@@ -99,6 +101,14 @@ public class Meal {
 
     public void setTipo(String tipo) {
         this.tipo = tipo;
+    }
+
+    public String getFoto() {
+        return foto;
+    }
+
+    public void setFoto(String foto) {
+        this.foto = foto;
     }
 
     // Getters y Setters
