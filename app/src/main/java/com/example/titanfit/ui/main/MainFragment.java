@@ -39,6 +39,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.time.DateTimeException;
 import java.time.DayOfWeek;
@@ -192,7 +193,8 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         User user = null;
         if (args != null) {
             user = (User) args.getSerializable("user");
-        } else if (manager.isLoggedIn()) {
+        }
+        if (user == null && manager.isLoggedIn()) {
             user = manager.getUser();
         }
 
@@ -203,9 +205,14 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             binding.grasas.setText("Grasas: " + 0 + "/" + Math.round(user.getGoals().getFatsPercentage()) + "g");
             binding.cpiCalories.setMax(user.getGoals().getDailyCalories());
             binding.cpiCalories.setMin(0);
+            return user.getGoals();
+        } else {
+            // Usuario no encontrado, maneja este caso (retorna null o un valor por defecto)
+            Log.e("MainFragment", "Usuario es null en initializeUserData");
+            return null;  // o new UserGoal() si tienes un constructor por defecto
         }
-        return user.getGoals();
     }
+
 
     private void setupButtonListeners(double proteinastotal,double carbstotal, double fatstotal,int calstotal) {
         binding.btnPreviousDay.setOnClickListener(v -> changeDay(-1,proteinastotal,carbstotal,fatstotal,calstotal));
@@ -217,6 +224,8 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     private void openDialogAddComida(String tipo) {
         // Dismiss all existing dialogs
         dismissAllDialogFragments(getParentFragmentManager());
+
+        Bundle args=getArguments();
 
         Bundle bundle = new Bundle();
         bundle.putString("tipo", tipo);

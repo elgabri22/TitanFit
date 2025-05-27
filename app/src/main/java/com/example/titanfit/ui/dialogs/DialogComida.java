@@ -19,6 +19,7 @@ import com.example.titanfit.models.Food;
 import com.example.titanfit.models.Meal;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceFood;
+import com.example.titanfit.ui.SharedPreferencesManager;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -110,7 +111,9 @@ public class DialogComida extends DialogFragment {
             double gramos = gramosStr.isEmpty() ? 100 : Double.parseDouble(gramosStr);
             String tipo = getArguments() != null ? getArguments().getString(ARG_TIPO, "Desconocido") : "Desconocido";
 
-            Meal meal = new Meal(comida.getName(), (int) baseCalories, baseProteins, baseCarbs, baseFats, tipo, LocalDate.now().toString(), gramos,comida.getImagen());
+            SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
+
+            Meal meal = new Meal(comida.getName(), (int) baseCalories, baseProteins, baseCarbs, baseFats, tipo, LocalDate.now().toString(), gramos,comida.getImagen(),sharedPreferencesManager.getUser());
 
             if (mealAddedListener != null) {
                 mealAddedListener.onMealAdded(meal,tipo);

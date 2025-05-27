@@ -14,11 +14,20 @@ public class Meal {
     private String fecha;
     private double gramos;
     private String foto;
+    private User usuario;
 
     // Constructor vacío
     public Meal() {}
 
-    public Meal(String name, int calories, double protein, double carbs, double fats,String tipo,String fecha,double gramos,String foto) {
+    public User getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(User usuario) {
+        this.usuario = usuario;
+    }
+
+    public Meal(String name, int calories, double protein, double carbs, double fats, String tipo, String fecha, double gramos, String foto, User user) {
         this.id = id;
         this.name = name;
         this.calories = calories;
@@ -26,6 +35,7 @@ public class Meal {
         this.carbs = carbs;
         this.fats = fats;
         this.tipo=tipo;
+        this.usuario=user;
         this.fecha=fecha;
         this.gramos=gramos;
         this.foto=foto;

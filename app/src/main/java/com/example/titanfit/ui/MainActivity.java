@@ -17,6 +17,7 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.navigation.NavOptions; // ¡Asegúrate de tener esta importación!
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.ActivityMainBinding;
+import com.example.titanfit.models.User;
 import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.appBarMain.toolbar);
+
 
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
@@ -94,37 +96,48 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void handleIntentNavigation(Intent intent) {
-        // Una verificación extra para 'navController' por si acaso,
-        // aunque con .post() debería ser menos probable que sea null.
         if (navController == null) {
             Log.e("MainActivity", "NavController es null en handleIntentNavigation (después de post). No se puede navegar.");
             return;
+        }
+
+        SharedPreferencesManager manager = new SharedPreferencesManager(getApplicationContext());
+        User user = manager.getUser();
+
+        // Validamos si usuario o goals son null; si es así, limpiamos SharedPreferences
+        if (user == null || user.getGoals() == null) {
+            Log.w("MainActivity", "Usuario o goals null, limpiando SharedPreferences.");
+            manager.clearUser();
         }
 
         if (intent != null && intent.getExtras() != null) {
             Bundle bundle = intent.getExtras();
             int destinationId = bundle.getInt(EXTRA_NAV_DESTINATION, 0);
 
+            // Validación: si quieren ir a main pero user o goals son null, redirigir a home (o login)
+            if (destinationId == R.id.main) {
+                user = manager.getUser();  // Volvemos a obtener después de limpiar, por si acaso
+                if (user == null || user.getGoals() == null) {
+                    Log.w("MainActivity", "Después de limpiar, usuario o goals siguen null, redirigiendo a home en vez de main");
+                    destinationId = R.id.home;  // O a login, según tu flujo
+                }
+            }
+
             if (destinationId != 0 && destinationId != -1) {
                 try {
-                    // Evitar navegar si el destino ya es el destino actual
-                    // Ahora sí es seguro llamar a getCurrentDestination() porque estamos en .post()
                     if (navController.getCurrentDestination() == null ||
                             navController.getCurrentDestination().getId() != destinationId) {
 
-                        // Opciones de navegación para limpiar la pila al ir a Login o Home
                         NavOptions navOptions = null;
                         if (destinationId == R.id.login || destinationId == R.id.home) {
-                            // Se puede usar try-catch aquí también para getGraph().getStartDestinationId()
-                            // aunque es muy poco probable que falle si el NavController está inicializado.
                             try {
                                 navOptions = new NavOptions.Builder()
-                                        .setPopUpTo(navController.getGraph().getStartDestinationId(), true) // Pop up to start destination, inclusive
+                                        .setPopUpTo(navController.getGraph().getStartDestinationId(), true)
                                         .build();
                             } catch (IllegalStateException e) {
                                 Log.e("MainActivity", "Error obteniendo el ID de startDestination: " + e.getMessage());
-                                // Si hay un error aquí, la navegación se hará sin popUpTo
                             }
                         }
 
@@ -135,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } catch (IllegalArgumentException e) {
                     Log.e("MainActivity", "ID de destino de navegación no válido: " + destinationId, e);
-                    // Esto ocurre si el ID no existe en tu nav_graph.xml
                 }
             } else {
                 Log.d("MainActivity", "No se encontró un ID de navegación válido en el Intent.");
@@ -144,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d("MainActivity", "Intent o sus extras son nulos. El NavController cargará el startDestination por defecto.");
         }
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

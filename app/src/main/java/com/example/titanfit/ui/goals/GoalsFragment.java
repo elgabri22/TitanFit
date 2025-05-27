@@ -25,6 +25,7 @@ import com.example.titanfit.models.UserGoal;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceUser;
 import com.example.titanfit.ui.Metodos;
+import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.home.HomeFragment;
 
 import java.util.List;
@@ -98,6 +99,7 @@ public class GoalsFragment extends Fragment {
                 }
                 UserGoal userGoal= Metodos.calculaMacros(peso,altura,edad,genero,factor_act,objetivoseleccionado);
                 User user=new User(usuario,email,password,edad,peso,altura,userGoal,null);
+                SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
                 ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
                 Call<User> call = apiService.addUser(user);
                 call.enqueue(new Callback<User>() {
@@ -107,6 +109,7 @@ public class GoalsFragment extends Fragment {
                             Toast.makeText(requireContext(), "Usuario creado correctamente", Toast.LENGTH_LONG).show();
                             Bundle bundle=new Bundle();
                             bundle.putSerializable("user",user);
+                            sharedPreferencesManager.saveUser(user);
                             NavController navController = NavHostFragment.findNavController(GoalsFragment.this);
                             navController.navigate(R.id.action_goals_to_main,bundle);
                         }
