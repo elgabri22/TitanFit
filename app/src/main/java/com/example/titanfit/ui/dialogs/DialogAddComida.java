@@ -22,6 +22,7 @@ import com.example.titanfit.R;
 import com.example.titanfit.adapters.AdapterComida;
 import com.example.titanfit.databinding.DialogAddComidaBinding;
 import com.example.titanfit.models.Food;
+import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceFood;
 import com.google.gson.JsonArray;
@@ -65,7 +66,8 @@ public class DialogAddComida extends DialogFragment {
         binding.recyclerViewComidas.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new AdapterComida(comidas, fragmentManager, mealAddedListener);
         String tipo = getArguments() != null ? getArguments().getString("tipo", "Desconocido") : "Desconocido";
-        adapter.actualizaTipo(tipo);
+        User user= getArguments() != null ? (User) getArguments().getSerializable("user"): null;
+        adapter.actualizaTipo(tipo,user);
         binding.recyclerViewComidas.setAdapter(adapter);
 
         // Initialize tipos map

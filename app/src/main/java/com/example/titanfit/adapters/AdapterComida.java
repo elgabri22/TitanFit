@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.titanfit.R;
 import com.example.titanfit.models.Food;
+import com.example.titanfit.models.User;
 import com.example.titanfit.ui.dialogs.DialogComida;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
     private FragmentManager fragmentManager;
     private String tipo = "Desconocido";
     private DialogComida.OnMealAddedListener mealAddedListener;
+    private User user;
 
     public AdapterComida(List<Food> listfoods, FragmentManager fragmentManager, DialogComida.OnMealAddedListener listener) {
         this.listComidas = (listfoods != null) ? new ArrayList<>(listfoods) : new ArrayList<>();
@@ -36,7 +38,7 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolderComida holder, int position) {
         Food comida = listComidas.get(position);
-        holder.renderize(comida, tipo);
+        holder.renderize(comida, tipo,this.user);
     }
 
     @Override
@@ -52,8 +54,9 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
         notifyDataSetChanged();
     }
 
-    public void actualizaTipo(String tipo) {
+    public void actualizaTipo(String tipo,User user) {
         this.tipo = (tipo != null) ? tipo : "Desconocido";
+        this.user=user;
         notifyDataSetChanged();
     }
 }

@@ -113,6 +113,8 @@ public class DialogComida extends DialogFragment {
 
             SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
 
+            Log.d("user",sharedPreferencesManager.getUser().toString());
+
             Meal meal = new Meal(comida.getName(), (int) baseCalories, baseProteins, baseCarbs, baseFats, tipo, LocalDate.now().toString(), gramos,comida.getImagen(),sharedPreferencesManager.getUser());
 
             if (mealAddedListener != null) {

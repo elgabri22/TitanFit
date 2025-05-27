@@ -106,10 +106,11 @@ public class GoalsFragment extends Fragment {
                     @Override
                     public void onResponse(Call<User> call, Response<User> response) {
                         if (response.isSuccessful()) {
+                            User user1=response.body();
                             Toast.makeText(requireContext(), "Usuario creado correctamente", Toast.LENGTH_LONG).show();
                             Bundle bundle=new Bundle();
-                            bundle.putSerializable("user",user);
-                            sharedPreferencesManager.saveUser(user);
+                            bundle.putSerializable("user",user1);
+                            sharedPreferencesManager.saveUser(user1);
                             NavController navController = NavHostFragment.findNavController(GoalsFragment.this);
                             navController.navigate(R.id.action_goals_to_main,bundle);
                         }

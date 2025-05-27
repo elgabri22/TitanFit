@@ -63,6 +63,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     private Calendar calendar;
     private SharedPreferencesManager manager;
     private Context context;
+    private User usuario;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -133,7 +134,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         }
         ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
         Toast.makeText(context, fecha, Toast.LENGTH_LONG).show();
-        Call<List<Meal>> meals = apiService.getMeals(fecha);
+        Call<List<Meal>> meals = apiService.getMeals(fecha,usuario.getId());
         meals.enqueue(new Callback<List<Meal>>() {
             @Override
             public void onResponse(Call<List<Meal>> call, Response<List<Meal>> response) {
@@ -199,6 +200,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         }
 
         if (user != null) {
+            this.usuario=user;
             binding.tvCaloriesLabel.setText(0 + "/" + user.getGoals().getDailyCalories() + "kcal");
             binding.proteinas.setText("Proteinas: " + 0 + "/" + Math.round(user.getGoals().getProteinPercentage()) + "g");
             binding.carbohidratos.setText("Carbohidratos: " + 0 + "/" + Math.round(user.getGoals().getCarbsPercentage()) + "g");
@@ -229,6 +231,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
 
         Bundle bundle = new Bundle();
         bundle.putString("tipo", tipo);
+        bundle.putSerializable("user",usuario);
         DialogAddComida dialog = new DialogAddComida(new ArrayList<>(), getParentFragmentManager(), this);
         dialog.setArguments(bundle);
         dialog.show(getParentFragmentManager(), "DialogAddComida");
@@ -255,12 +258,13 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     private void fetchMealsForDate(String fecha,double proteinastotal,double carbstotal, double fatstotal,int calstotal) {
         ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
         Toast.makeText(context, fecha, Toast.LENGTH_LONG).show();
-        Call<List<Meal>> meals = apiService.getMeals(fecha);
+        Call<List<Meal>> meals = apiService.getMeals(fecha,usuario.getId());
         meals.enqueue(new Callback<List<Meal>>() {
             @Override
             public void onResponse(Call<List<Meal>> call, Response<List<Meal>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<Meal> mealList = response.body();
+                    Log.d("usermeal",mealList.toString());
                     int calorias=0;
                     double proteinas=0;
                     double carbs=0;
@@ -305,6 +309,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     @Override
     public void onMealAdded(Meal meal,String tipo) {
         // Update UI with new Meal data
+        Log.d("meal",meal.toString());
         int currentCalories = binding.cpiCalories.getProgress();
         int newCalories = currentCalories + meal.getCalories();
         binding.cpiCalories.setProgress(newCalories);

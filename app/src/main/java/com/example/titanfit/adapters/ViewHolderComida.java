@@ -10,6 +10,7 @@ import com.bumptech.glide.Glide;
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.ItemComidaBinding;
 import com.example.titanfit.models.Food;
+import com.example.titanfit.models.User;
 import com.example.titanfit.ui.dialogs.DialogComida;
 
 public class ViewHolderComida extends RecyclerView.ViewHolder {
@@ -25,7 +26,7 @@ public class ViewHolderComida extends RecyclerView.ViewHolder {
         this.mealAddedListener = listener;
     }
 
-    public void renderize(Food comida, String tipo) {
+    public void renderize(Food comida, String tipo,User user) {
         if (comida == null) {
             return;
         }
@@ -37,10 +38,10 @@ public class ViewHolderComida extends RecyclerView.ViewHolder {
                 .load(comida.getImagen())
                 .into(binding.imageViewComida);
 
-        setOnClickListeners(comida, tipo);
+        setOnClickListeners(comida, tipo,user);
     }
 
-    private void setOnClickListeners(final Food comida, String tipo) {
+    private void setOnClickListeners(final Food comida, String tipo, User user) {
         if (binding.btnadd != null) {
             binding.btnadd.setOnClickListener(v -> {
                 if (fragmentManager != null && comida != null) {

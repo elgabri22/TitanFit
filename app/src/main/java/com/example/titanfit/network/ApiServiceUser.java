@@ -20,8 +20,8 @@ public interface ApiServiceUser {
     @GET("api/user/{email}")
     Call<User> getUser(@Path("email") String email);
 
-    @GET("meals/{fecha}")
-    Call<List<Meal>> getMeals(@Path("fecha") String fecha);
+    @GET("meals/{fecha}/{id}")
+    Call<List<Meal>> getMeals(@Path("fecha") String fecha,@Path("id") String id);
 
     @POST("auth/generateToken")
     Call<ResponseBody> generateToken(@Body User user);
