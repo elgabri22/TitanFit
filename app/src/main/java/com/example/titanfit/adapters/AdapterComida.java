@@ -20,6 +20,7 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
     private String tipo = "Desconocido";
     private DialogComida.OnMealAddedListener mealAddedListener;
     private User user;
+    private String fecha;
 
     public AdapterComida(List<Food> listfoods, FragmentManager fragmentManager, DialogComida.OnMealAddedListener listener) {
         this.listComidas = (listfoods != null) ? new ArrayList<>(listfoods) : new ArrayList<>();
@@ -38,7 +39,7 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolderComida holder, int position) {
         Food comida = listComidas.get(position);
-        holder.renderize(comida, tipo,this.user);
+        holder.renderize(comida, tipo,this.user,this.fecha);
     }
 
     @Override
@@ -54,9 +55,10 @@ public class AdapterComida extends RecyclerView.Adapter<ViewHolderComida> {
         notifyDataSetChanged();
     }
 
-    public void actualizaTipo(String tipo,User user) {
+    public void actualizaTipo(String tipo,User user,String fecha) {
         this.tipo = (tipo != null) ? tipo : "Desconocido";
         this.user=user;
+        this.fecha=fecha;
         notifyDataSetChanged();
     }
 }

@@ -1,15 +1,21 @@
 package com.example.titanfit.models;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 
 public class Food implements Serializable {
+    @SerializedName("id")
     private String id;
+    @SerializedName("name")
     private String name;
     private int calories;
     private double protein;
     private double carbs;
     private double fats;
+    @SerializedName("imagen")
     private String imagen;
     private String tipo;
 
@@ -25,20 +31,6 @@ public class Food implements Serializable {
         this.fats = fats;
         this.imagen=imagen;
         this.tipo=tipo;
-    }
-
-    @Override
-    public String toString() {
-        return "Food{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", calories=" + calories +
-                ", protein=" + protein +
-                ", carbs=" + carbs +
-                ", fats=" + fats +
-                ", imagen='" + imagen + '\'' +
-                ", tipo='" + tipo + '\'' +
-                '}';
     }
 
     //Getters and setters
@@ -106,5 +98,39 @@ public class Food implements Serializable {
 
     public void setImagen(String imagen) {
         this.imagen = imagen;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Food food = (Food) o;
+        if (id != null && food.id != null) {
+            return id.equals(food.id);
+        }
+        return name != null && food.name != null &&
+                name.trim().equalsIgnoreCase(food.name.trim());
+    }
+
+    @Override
+    public int hashCode() {
+        if (id != null) {
+            return id.hashCode();
+        }
+        return name != null ? name.toLowerCase().trim().hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "Food{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", calories=" + calories +
+                ", protein=" + protein +
+                ", carbs=" + carbs +
+                ", fats=" + fats +
+                ", imagen='" + imagen + '\'' +
+                ", tipo='" + tipo + '\'' +
+                '}';
     }
 }

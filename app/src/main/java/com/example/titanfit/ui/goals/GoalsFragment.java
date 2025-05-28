@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.FragmentGoalsBinding;
+import com.example.titanfit.models.Favoritos;
 import com.example.titanfit.models.User;
 import com.example.titanfit.models.UserGoal;
 import com.example.titanfit.network.ApiClient;
@@ -98,7 +99,7 @@ public class GoalsFragment extends Fragment {
                     factor_act=1.9;
                 }
                 UserGoal userGoal= Metodos.calculaMacros(peso,altura,edad,genero,factor_act,objetivoseleccionado);
-                User user=new User(usuario,email,password,edad,peso,altura,userGoal,null);
+                User user=new User(usuario,email,password,edad,peso,altura,userGoal,null,new Favoritos());
                 SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
                 ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
                 Call<User> call = apiService.addUser(user);

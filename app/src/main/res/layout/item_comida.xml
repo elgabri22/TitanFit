@@ -37,8 +37,7 @@
                 android:layout_height="wrap_content"
                 android:text="Nombre de Comida"
                 android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/black" />
+                android:textStyle="bold" />
 
             <!-- Tipo de comida -->
             <TextView

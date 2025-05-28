@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -17,8 +18,14 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.navigation.NavOptions; // ¡Asegúrate de tener esta importación!
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.ActivityMainBinding;
+import com.example.titanfit.models.Food;
 import com.example.titanfit.models.User;
+import com.example.titanfit.ui.dialogs.DialogAddComida;
+import com.example.titanfit.ui.dialogs.DialogFavoritos;
 import com.google.android.material.navigation.NavigationView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -50,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
             mAppBarConfiguration = new AppBarConfiguration.Builder(R.id.main)
                     .setOpenableLayout(drawer)
                     .build();
+
+
 
             NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
             NavigationUI.setupWithNavController(navigationView, navController);
@@ -165,11 +174,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onSupportNavigateUp() {
-        if (navController != null) {
-            return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                    || super.onSupportNavigateUp();
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        // Handle hamburger menu (navigation drawer toggle)
+        if (id == android.R.id.home) {
+            DrawerLayout drawerLayout = findViewById(R.id.drawer_layout); // Replace with your DrawerLayout ID
+            if (drawerLayout != null) {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    drawerLayout.openDrawer(GravityCompat.START);
+                }
+            } else {
+                Log.e("MainActivity", "DrawerLayout is null");
+            }
+            return true;
         }
-        return super.onSupportNavigateUp();
+
+        return super.onOptionsItemSelected(item);
     }
 }
