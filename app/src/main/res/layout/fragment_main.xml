@@ -10,6 +10,18 @@
     tools:context=".ui.home.HomeFragment"
     tools:theme="@style/Theme.MaterialComponents.Light.NoActionBar">
 
+    <!-- Star ImageView in the top-left corner -->
+    <ImageView
+        android:id="@+id/ivStar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/estrella"
+        android:contentDescription="Star decoration"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp" />
+
     <LinearLayout
         android:id="@+id/llCalendarHeader"
         android:layout_width="0dp"
@@ -32,7 +44,7 @@
             android:id="@+id/tvCurrentDay"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Lunes 07"
+            android:text="07-01-2025"
             android:textStyle="bold"
             android:textColor="#000000"
             android:textSize="18sp"
@@ -169,8 +181,6 @@
         app:layout_constraintTop_toBottomOf="@id/tvBreakfastHeader"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
-
     </LinearLayout>
 
     <Button

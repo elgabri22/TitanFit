@@ -9,19 +9,37 @@
     <!-- Título de la sección -->
     <TextView
         android:id="@+id/textViewTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Alimento"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="#212121"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/buttonFavorite"
+        app:layout_constraintBottom_toBottomOf="@+id/buttonFavorite"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"/>
+
+    <!-- Botón de favorito (corazón) -->
+    <ImageButton
+        android:id="@+id/buttonFavorite"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Agregar a favoritos"
+        android:scaleType="centerInside"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/textViewTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:src="@drawable/estrella" />
 
     <!-- Contenedor de calorías (estilo Fitia) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/caloriesContainer"
-        android:layout_width="80dp"
+        android:layout_width="match_parent"
         android:layout_height="80dp"
         app:cardCornerRadius="40dp"
         app:cardElevation="4dp"

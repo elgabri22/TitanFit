@@ -35,6 +35,7 @@ import com.example.titanfit.network.ApiServiceUser;
 import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.dialogs.DialogAddComida;
 import com.example.titanfit.ui.dialogs.DialogComida;
+import com.example.titanfit.ui.dialogs.DialogFavoritos;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -44,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.time.DateTimeException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -81,14 +83,13 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         // Initialize UI with user data
         UserGoal goals=initializeUserData();
 
-        String fecha="";
+        String fecha = "";
+
 
         try {
-            // Obtener la fecha actual (hoy es 26 de mayo de 2025)
             LocalDate today = LocalDate.now();
-            int expectedDay = today.getDayOfMonth(); // Debería ser 26
+            int expectedDay = today.getDayOfMonth();
 
-            // Obtener el texto del TextView y depurarlo
             String currentDayText = binding.tvCurrentDay.getText().toString();
             Log.d("fecha", "Contenido del TextView: " + currentDayText);
 
@@ -100,15 +101,15 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                     day = Integer.parseInt(dayNumber);
                     if (day != expectedDay) {
                         Log.w("fecha", "El día extraído (" + day + ") no coincide con el día actual (" + expectedDay + "). Usando el día actual.");
-                        day = expectedDay; // Usar el día actual (26) si no coincide
+                        day = expectedDay;
                     }
                 } catch (NumberFormatException e) {
                     Log.w("fecha", "No se pudo parsear el día del TextView: " + currentDayText);
-                    day = expectedDay; // Usar el día actual (26) en caso de error
+                    day = expectedDay;
                 }
             } else {
                 Log.w("fecha", "El TextView no contiene un número válido: " + currentDayText);
-                day = expectedDay; // Usar el día actual (26) si no hay número
+                day = expectedDay;
             }
 
             // Ajustar la fecha al día especificado
@@ -119,19 +120,21 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                 Toast.makeText(context, "Día inválido: " + day, Toast.LENGTH_SHORT).show();
             }
 
-            // Obtener el nombre del día de la semana en español
+            // Obtener el nombre del día de la semana en español (opcional)
             DayOfWeek dayOfWeek = today.getDayOfWeek();
             String dayName = dayOfWeek.getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
             dayName = dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
 
-            // Formatear la fecha al formato YYYY-MM-DD
-            fecha = String.format("%d-%02d-%02d", today.getYear(), today.getMonthValue(), today.getDayOfMonth());
-            Log.d("fecha", "Fecha generada: " + fecha); // Debería mostrar "2025-05-26"
+            // Formatear la fecha al formato dd-MM-yyyy
+            fecha = String.format("%02d-%02d-%d", today.getDayOfMonth(), today.getMonthValue(), today.getYear());
+            Log.d("fecha", "Fecha generada: " + fecha);
+            binding.tvCurrentDay.setText(fecha);
 
         } catch (Exception e) {
             Log.e("fecha", "Error inesperado: " + e.getMessage());
             Toast.makeText(context, "Error al procesar la fecha", Toast.LENGTH_SHORT).show();
         }
+
         ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
         Toast.makeText(context, fecha, Toast.LENGTH_LONG).show();
         Call<List<Meal>> meals = apiService.getMeals(fecha,usuario.getId());
@@ -181,7 +184,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         });
 
         calendar = Calendar.getInstance();
-        updateDateText();
+
 
         // Set up button listeners
         setupButtonListeners(goals.getProteinPercentage(),goals.getCarbsPercentage(),goals.getFatsPercentage(),goals.getDailyCalories());
@@ -227,33 +230,40 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         // Dismiss all existing dialogs
         dismissAllDialogFragments(getParentFragmentManager());
 
+        // Obtener el día desde el TextView
+        String currentDayText = binding.tvCurrentDay.getText().toString();
+
         Bundle args=getArguments();
 
         Bundle bundle = new Bundle();
         bundle.putString("tipo", tipo);
         bundle.putSerializable("user",usuario);
+        bundle.putString("fecha",currentDayText);
         DialogAddComida dialog = new DialogAddComida(new ArrayList<>(), getParentFragmentManager(), this);
         dialog.setArguments(bundle);
         dialog.show(getParentFragmentManager(), "DialogAddComida");
     }
 
-    private void changeDay(int days,double proteinastotal,double carbstotal, double fatstotal,int calstotal) {
-        String currentDayText = binding.tvCurrentDay.getText().toString();
-        String dayNumber = currentDayText.replaceAll("\\D+", "");
-        int day = Integer.parseInt(dayNumber);
-
-        LocalDate today = LocalDate.now().withDayOfMonth(day);
+    private void changeDay(int days, double proteinastotal, double carbstotal, double fatstotal, int calstotal) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy", new Locale("es", "ES"));
+        LocalDate today = LocalDate.parse(binding.tvCurrentDay.getText(), formatter);
         LocalDate newDay = today.plusDays(days);
 
+        // Obtener nombre del día
         DayOfWeek dayOfWeek = newDay.getDayOfWeek();
         String dayName = dayOfWeek.getDisplayName(TextStyle.FULL, new Locale("es", "ES"));
         dayName = dayName.substring(0, 1).toUpperCase() + dayName.substring(1);
 
-        String fecha = String.format("%d-%02d-%02d", newDay.getYear(), newDay.getMonthValue(), newDay.getDayOfMonth());
-        binding.tvCurrentDay.setText(dayName + " " + String.format("%02d", newDay.getDayOfMonth()));
+        // Formatear nueva fecha
+        String fecha = newDay.format(formatter);
 
-        fetchMealsForDate(fecha,proteinastotal,carbstotal,fatstotal,calstotal);
+        // Mostrar en el TextView
+        binding.tvCurrentDay.setText(fecha);
+
+        fetchMealsForDate(fecha, proteinastotal, carbstotal, fatstotal, calstotal);
+
     }
+
 
     private void fetchMealsForDate(String fecha,double proteinastotal,double carbstotal, double fatstotal,int calstotal) {
         ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
@@ -309,7 +319,6 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     @Override
     public void onMealAdded(Meal meal,String tipo) {
         // Update UI with new Meal data
-        Log.d("meal",meal.toString());
         int currentCalories = binding.cpiCalories.getProgress();
         int newCalories = currentCalories + meal.getCalories();
         binding.cpiCalories.setProgress(newCalories);
@@ -345,6 +354,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
 
     private void addMealView(LinearLayout linearLayout, Meal meal) {
         // Crear la tarjeta de comida inmediatamente para mostrarla localmente
+        Log.d("meal",meal.toString());
         LinearLayout mealCard = new LinearLayout(context);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -431,66 +441,63 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
                 if (response.isSuccessful() && response.body() != null && !response.body().isJsonNull()) {
                     JsonElement jsonElement = response.body();
-                    Meal savedMeal = null;
+                    Log.d("json",jsonElement.toString());
+                    Log.d("MainFragment", "Server response: " + jsonElement.toString());
                     try {
-                        savedMeal = gson.fromJson(jsonElement, Meal.class);
-                        if (jsonElement.isJsonObject()) {
-                            JsonObject jsonObj = jsonElement.getAsJsonObject();
-                            if (jsonObj.has("id")) {
-                                String id = jsonObj.get("id").getAsString();
-                                meal.setId(id); // Actualizar el ID de la comida original
-                            }
-                        }
-                        Log.d("MainFragment", "Meal added: " + meal.getName() + ", ID: " + meal.getId());
-                        Toast.makeText(context, "Meal added successfully", Toast.LENGTH_SHORT).show();
+                        Meal savedMeal = gson.fromJson(jsonElement, Meal.class);
+                        if (savedMeal.getId() != null) {
+                            meal.setId(savedMeal.getId()); // Actualizar el ID de la comida original
+                            Log.d("MainFragment", "Meal added: " + meal.getName() + ", ID: " + meal.getId());
+                            Toast.makeText(context, "Meal added successfully", Toast.LENGTH_SHORT).show();
 
-                        // Configurar el listener de eliminación con el ID actualizado
-                        deleteImage.setOnClickListener(view -> {
-                            if (meal.getId() != null) {
-                                Log.d("id", meal.getId());
-                                ApiServiceFood apiServiceDelete = ApiClient.getClient().create(ApiServiceFood.class);
-                                Call<Void> deleteCall = apiServiceDelete.deleteMeal(meal.getId());
-                                deleteCall.enqueue(new Callback<Void>() {
-                                    @Override
-                                    public void onResponse(Call<Void> call, Response<Void> response) {
-                                        if (response.isSuccessful()) {
-                                            linearLayout.removeView(mealCard);
+                            // Configurar el listener de eliminación con el ID actualizado
+                            deleteImage.setOnClickListener(view -> {
+                                if (meal.getId() != null) {
+                                    Log.d("id", meal.getId());
+                                    ApiServiceFood apiServiceDelete = ApiClient.getClient().create(ApiServiceFood.class);
+                                    Call<Void> deleteCall = apiServiceDelete.deleteMeal(meal.getId());
+                                    deleteCall.enqueue(new Callback<Void>() {
+                                        @Override
+                                        public void onResponse(Call<Void> call, Response<Void> response) {
+                                            if (response.isSuccessful()) {
+                                                linearLayout.removeView(mealCard);
+                                                // Actualizar calorías
+                                                int currentCalories = binding.cpiCalories.getProgress();
+                                                binding.cpiCalories.setProgress(currentCalories - meal.getCalories());
+                                                binding.tvCaloriesLabel.setText((currentCalories - meal.getCalories()) + "/" +
+                                                        binding.cpiCalories.getMax() + " kcal");
+                                                // Actualizar macros
+                                                double currentProteins = parseMacro(binding.proteinas.getText().toString());
+                                                double currentCarbs = parseMacro(binding.carbohidratos.getText().toString());
+                                                double currentFats = parseMacro(binding.grasas.getText().toString());
 
-                                            // Actualizar calorías
-                                            int currentCalories = binding.cpiCalories.getProgress();
-                                            binding.cpiCalories.setProgress(currentCalories - meal.getCalories());
-                                            binding.tvCaloriesLabel.setText((currentCalories - meal.getCalories()) + "/" +
-                                                    binding.cpiCalories.getMax() + " kcal");
-
-                                            // Actualizar macros
-                                            double currentProteins = parseMacro(binding.proteinas.getText().toString());
-                                            double currentCarbs = parseMacro(binding.carbohidratos.getText().toString());
-                                            double currentFats = parseMacro(binding.grasas.getText().toString());
-
-                                            binding.proteinas.setText("Proteinas: " + String.format("%.1f", currentProteins - meal.getProtein()) + "/" +
-                                                    Math.round(parseMacroGoal(binding.proteinas.getText().toString())) + "g");
-                                            binding.carbohidratos.setText("Carbohidratos: " + String.format("%.1f", currentCarbs - meal.getCarbs()) + "/" +
-                                                    Math.round(parseMacroGoal(binding.carbohidratos.getText().toString())) + "g");
-                                            binding.grasas.setText("Grasas: " + String.format("%.1f", currentFats - meal.getFats()) + "/" +
-                                                    Math.round(parseMacroGoal(binding.grasas.getText().toString())) + "g");
-                                        } else {
-                                            Log.e("MainFragment", "Delete failed: " + response.code());
-                                            Toast.makeText(context, "Failed to delete meal", Toast.LENGTH_SHORT).show();
+                                                binding.proteinas.setText("Proteinas: " + String.format("%.1f", currentProteins - meal.getProtein()) + "/" +
+                                                        Math.round(parseMacroGoal(binding.proteinas.getText().toString())) + "g");
+                                                binding.carbohidratos.setText("Carbohidratos: " + String.format("%.1f", currentCarbs - meal.getCarbs()) + "/" +
+                                                        Math.round(parseMacroGoal(binding.carbohidratos.getText().toString())) + "g");
+                                                binding.grasas.setText("Grasas: " + String.format("%.1f", currentFats - meal.getFats()) + "/" +
+                                                        Math.round(parseMacroGoal(binding.grasas.getText().toString())) + "g");
+                                            } else {
+                                                Log.e("MainFragment", "Delete failed: " + response.code());
+                                                Toast.makeText(context, "Failed to delete meal", Toast.LENGTH_SHORT).show();
+                                            }
                                         }
-                                    }
 
-                                    @Override
-                                    public void onFailure(Call<Void> call, Throwable t) {
-                                        Log.e("MainFragment", "Delete error: " + t.getMessage());
-                                        Toast.makeText(context, "Error deleting meal", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            }
-                            Toast.makeText(context, "Meal removed", Toast.LENGTH_SHORT).show();
-                        });
+                                        @Override
+                                        public void onFailure(Call<Void> call, Throwable t) {
+                                            Log.e("MainFragment", "Delete error: " + t.getMessage());
+                                            Toast.makeText(context, "Error deleting meal", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
+                                Toast.makeText(context, "Meal removed", Toast.LENGTH_SHORT).show();
+                            });
+                        } else {
+                            Log.w("MainFragment", "No ID in response, using original meal");
+                            savedMeal = meal;
+                        }
                     } catch (Exception e) {
-                        Log.w("MainFragment", "Could not parse response, using original meal: " + e.getMessage());
-                        savedMeal = meal; // Usar la comida original en caso de error
+                        Log.w("MainFragment", "Could not parse response: " + e.getMessage());
                     }
                 } else {
                     Log.e("MainFragment", "Add meal failed: " + response.code());
@@ -504,6 +511,31 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                 Toast.makeText(context, "Error adding meal", Toast.LENGTH_SHORT).show();
             }
         });
+
+        binding.ivStar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Click();
+            }
+        });
+    }
+
+    private void Click(){
+        SharedPreferencesManager manager = new SharedPreferencesManager(requireContext());
+        String fecha = binding.tvCurrentDay != null ? binding.tvCurrentDay.getText().toString() : "";
+        if (fecha.isEmpty()) {
+            Log.e("HomeFragment", "tvCurrentDay is null or empty");
+            Toast.makeText(requireContext(), "Fecha no disponible", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Bundle bundle = new Bundle();
+        bundle.putString("fecha", fecha);
+        bundle.putString("tipo", "Desayuno");
+        List<Food> comidas = manager.getUser().getFavoritos().getComidas();
+        DialogFavoritos dialogFavoritos = new DialogFavoritos(comidas, getParentFragmentManager(),this);
+        dialogFavoritos.setArguments(bundle);
+        dialogFavoritos.show(getParentFragmentManager(), "DialogFavoritos");
     }
 
     private double parseMacro(String text) {
@@ -522,11 +554,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         }
     }
 
-    private void updateDateText() {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEEE dd", Locale.getDefault());
-        String formattedDate = sdf.format(calendar.getTime());
-        binding.tvCurrentDay.setText(formattedDate);
-    }
+
 
     private void dismissAllDialogFragments(FragmentManager fragmentManager) {
         if (fragmentManager == null) {

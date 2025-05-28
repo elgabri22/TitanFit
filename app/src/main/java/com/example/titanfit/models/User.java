@@ -1,5 +1,7 @@
 package com.example.titanfit.models;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +15,12 @@ public class User implements Serializable {
     private int age;
     private double weight;
     private double height;
-    private List<Meal> meals; // Listado de comidas
+    private List<Meal> meals;
     private UserGoal goals;
     private String token;
     private int caloriasconsumidas;
+    @SerializedName("favoritos")
+    private Favoritos favoritos;
 
     // Constructor vacío
     public User() {
@@ -25,7 +29,7 @@ public class User implements Serializable {
 
 
 
-    public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meals,String token) {
+    public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meals,String token,Favoritos favoritos) {
         this.id=null;
         this.name = name;
         this.email = email;
@@ -37,6 +41,7 @@ public class User implements Serializable {
         this.meals = meals;
         this.token= token;
         this.caloriasconsumidas=0;
+        this.favoritos=favoritos;
     }
 
     public int getCaloriasconsumidas() {
@@ -47,7 +52,7 @@ public class User implements Serializable {
         this.caloriasconsumidas = caloriasconsumidas;
     }
 
-    public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meal) {
+    public User(String name, String email, String password, int age, double weight, double height, UserGoal goals, List<Meal> meal,Favoritos favoritos) {
         this.id=null;
         this.name = name;
         this.email = email;
@@ -56,8 +61,9 @@ public class User implements Serializable {
         this.weight = weight;
         this.height = height;
         this.goals = goals;
-        this.meals = meals;
+        this.meals = meal;
         this.token= "";
+        this.favoritos=new Favoritos();
     }
 
     // Getters y Setters
@@ -140,6 +146,14 @@ public class User implements Serializable {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public Favoritos getFavoritos() {
+        return favoritos;
+    }
+
+    public void setFavoritos(Favoritos favoritos) {
+        this.favoritos = favoritos;
     }
 
     @Override

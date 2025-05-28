@@ -1,5 +1,7 @@
 package com.example.titanfit.models;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 public class Meal {
@@ -14,6 +16,7 @@ public class Meal {
     private String fecha;
     private double gramos;
     private String foto;
+    @SerializedName("user")
     private User usuario;
 
     // Constructor vacío
@@ -123,6 +126,7 @@ public class Meal {
 
     // Getters y Setters
 
+
     @Override
     public String toString() {
         return "Meal{" +
@@ -134,6 +138,9 @@ public class Meal {
                 ", fats=" + fats +
                 ", tipo='" + tipo + '\'' +
                 ", fecha='" + fecha + '\'' +
+                ", gramos=" + gramos +
+                ", foto='" + foto + '\'' +
+                ", usuario=" + usuario +
                 '}';
     }
 }

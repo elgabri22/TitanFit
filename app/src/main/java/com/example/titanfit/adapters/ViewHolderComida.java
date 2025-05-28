@@ -26,7 +26,7 @@ public class ViewHolderComida extends RecyclerView.ViewHolder {
         this.mealAddedListener = listener;
     }
 
-    public void renderize(Food comida, String tipo,User user) {
+    public void renderize(Food comida, String tipo,User user,String fecha) {
         if (comida == null) {
             return;
         }
@@ -38,10 +38,10 @@ public class ViewHolderComida extends RecyclerView.ViewHolder {
                 .load(comida.getImagen())
                 .into(binding.imageViewComida);
 
-        setOnClickListeners(comida, tipo,user);
+        setOnClickListeners(comida, tipo,user,fecha);
     }
 
-    private void setOnClickListeners(final Food comida, String tipo, User user) {
+    private void setOnClickListeners(final Food comida, String tipo, User user,String fecha) {
         if (binding.btnadd != null) {
             binding.btnadd.setOnClickListener(v -> {
                 if (fragmentManager != null && comida != null) {
@@ -54,7 +54,7 @@ public class ViewHolderComida extends RecyclerView.ViewHolder {
                             }
                         }
                     }
-                    DialogComida dialog = DialogComida.newInstance(comida, tipo);
+                    DialogComida dialog = DialogComida.newInstance(comida, tipo,fecha);
                     dialog.setOnMealAddedListener(mealAddedListener);
                     dialog.show(fragmentManager, "DialogComida");
                 } else {

@@ -66,8 +66,9 @@ public class DialogAddComida extends DialogFragment {
         binding.recyclerViewComidas.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new AdapterComida(comidas, fragmentManager, mealAddedListener);
         String tipo = getArguments() != null ? getArguments().getString("tipo", "Desconocido") : "Desconocido";
+        String fecha = getArguments() != null ? getArguments().getString("fecha", "Desconocido") : "Desconocido";
         User user= getArguments() != null ? (User) getArguments().getSerializable("user"): null;
-        adapter.actualizaTipo(tipo,user);
+        adapter.actualizaTipo(tipo,user,fecha);
         binding.recyclerViewComidas.setAdapter(adapter);
 
         // Initialize tipos map
