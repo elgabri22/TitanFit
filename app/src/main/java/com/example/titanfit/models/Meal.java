@@ -1,8 +1,10 @@
 package com.example.titanfit.models;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.List;
 
-public class Meal {
+public class Meal implements Serializable {
 
     private String id;
     private String name;
@@ -134,6 +136,9 @@ public class Meal {
                 ", fats=" + fats +
                 ", tipo='" + tipo + '\'' +
                 ", fecha='" + fecha + '\'' +
+                ", gramos=" + gramos +
+                ", foto='" + foto + '\'' +
+                ", usuario=" + usuario.toString() +
                 '}';
     }
 }

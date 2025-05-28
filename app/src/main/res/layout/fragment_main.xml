@@ -21,31 +21,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <ImageView
-            android:id="@+id/btnPreviousDay"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/atras"
-            android:contentDescription="Día anterior"/>
-
-        <TextView
-            android:id="@+id/tvCurrentDay"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Lunes 07"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:textSize="18sp"
-            android:layout_marginHorizontal="16dp"/>
-
-        <ImageView
-            android:id="@+id/btnNextDay"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@android:color/transparent"
-            android:src="@drawable/atras"
-            android:rotation="180"
-            android:contentDescription="Día siguiente" />
+        <CalendarView
+            android:id="@+id/calendar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
     </LinearLayout>
 
     <LinearLayout
