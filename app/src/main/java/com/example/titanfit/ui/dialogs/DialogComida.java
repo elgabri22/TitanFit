@@ -162,26 +162,31 @@ public class DialogComida extends DialogFragment {
 
         binding.buttonAdd.setOnClickListener(v -> {
             String gramosStr = binding.editTextGrams.getText().toString();
-            double gramos = gramosStr.isEmpty() ? 100 : Double.parseDouble(gramosStr);
-            String tipo = getArguments() != null ? getArguments().getString(ARG_TIPO, "Desconocido") : "Desconocido";
+            double gramos = Double.parseDouble(gramosStr);
+            if (gramos<=0){
+                Toast.makeText(requireContext(),"Debe de ser mayor a 0 gramos",Toast.LENGTH_LONG).show();
+            }else{
+                String tipo = getArguments() != null ? getArguments().getString(ARG_TIPO, "Desconocido") : "Desconocido";
 
-            SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(requireContext());
-            Log.d("user", sharedPreferencesManager.getUser().toString());
+                SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(requireContext());
+                Log.d("user", sharedPreferencesManager.getUser().toString());
 
-            String fecha = (String) getArguments().get("fecha");
-            Meal meal = new Meal(comida.getName(), (int) baseCalories, baseProteins, baseCarbs, baseFats, tipo, fecha, gramos, comida.getImagen(), sharedPreferencesManager.getUser());
+                String fecha = (String) getArguments().get("fecha");
+                Meal meal = new Meal(comida.getName(), (int) Math.round((baseCalories/100)*gramos), baseProteins, baseCarbs, baseFats, tipo, fecha, gramos, comida.getImagen(), sharedPreferencesManager.getUser());
 
-            if (mealAddedListener != null) {
-                mealAddedListener.onMealAdded(meal, tipo);
+                if (mealAddedListener != null) {
+                    mealAddedListener.onMealAdded(meal, tipo);
+                }
+
+                dismiss();
+
+                Fragment parentDialog = getParentFragmentManager().findFragmentByTag("DialogAddComida");
+                if (parentDialog instanceof DialogFragment) {
+                    ((DialogFragment) parentDialog).dismiss();
+                    Log.d(TAG, "Dismissed DialogAddComida");
+                }
             }
 
-            dismiss();
-
-            Fragment parentDialog = getParentFragmentManager().findFragmentByTag("DialogAddComida");
-            if (parentDialog instanceof DialogFragment) {
-                ((DialogFragment) parentDialog).dismiss();
-                Log.d(TAG, "Dismissed DialogAddComida");
-            }
         });
 
         binding.buttonFavorite.setOnClickListener(new View.OnClickListener() {
