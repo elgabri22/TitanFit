@@ -1,5 +1,7 @@
 package com.example.titanfit.models;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
@@ -16,6 +18,7 @@ public class Meal implements Serializable {
     private String fecha;
     private double gramos;
     private String foto;
+    @SerializedName("user")
     private User usuario;
 
     // Constructor vacío

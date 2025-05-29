@@ -1,6 +1,8 @@
 package com.example.titanfit.ui.main;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -125,6 +127,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         Bundle bundle = new Bundle();
         bundle.putString("tipo", tipo);
         bundle.putSerializable("user", usuario);
+        bundle.putString("fecha",fecha);
         DialogAddComida dialog = new DialogAddComida(new ArrayList<>(), getParentFragmentManager(), this);
         dialog.setArguments(bundle);
         dialog.show(getParentFragmentManager(), "DialogAddComida");
@@ -147,7 +150,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                     for (Meal meal : mealList) {
                         LinearLayout targetLayout = meal.getTipo().equalsIgnoreCase("Desayuno")
                                 ? binding.llBreakfastItems : binding.llLunchItems;
-                        addMealView(targetLayout, meal);
+                        addMealView(targetLayout, meal, false); // Pass false to avoid saving
                         calories += meal.getCalories();
                         proteins += meal.getProtein();
                         carbs += meal.getCarbs();
@@ -183,15 +186,18 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
 
     @Override
     public void onMealAdded(Meal meal, String tipo) {
-        LinearLayout targetLayout = meal.getTipo().equalsIgnoreCase("Desayuno")
-                ? binding.llBreakfastItems : binding.llLunchItems;
-        addMealView(targetLayout, meal);
-
         // Update UI
         int currentCalories = binding.cpiCalories.getProgress() + meal.getCalories();
         double currentProteins = parseMacro(binding.proteinas.getText().toString()) + meal.getProtein();
         double currentCarbs = parseMacro(binding.carbohidratos.getText().toString()) + meal.getCarbs();
         double currentFats = parseMacro(binding.grasas.getText().toString()) + meal.getFats();
+        LinearLayout targetLayout = meal.getTipo().equalsIgnoreCase("Desayuno")
+                ? binding.llBreakfastItems : binding.llLunchItems;
+        addMealView(targetLayout, meal,true,currentCalories,currentProteins,currentCarbs,currentFats);
+
+        Log.d("meal",meal.toString());
+
+
 
         binding.cpiCalories.setProgress(currentCalories);
         binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal", currentCalories, binding.cpiCalories.getMax()));
@@ -205,108 +211,249 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         Log.d(TAG, "Meal added: " + meal.getName() + ", Calories: " + meal.getCalories());
     }
 
-    private void addMealView(LinearLayout linearLayout, Meal meal) {
-        LinearLayout mealCard = new LinearLayout(context);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        cardParams.setMargins(0, 8, 0, 8);
-        mealCard.setLayoutParams(cardParams);
-        mealCard.setOrientation(LinearLayout.HORIZONTAL);
-        mealCard.setPadding(16, 16, 16, 16);
-        mealCard.setGravity(Gravity.CENTER_VERTICAL);
+    private void addMealView(LinearLayout linearLayout, Meal meal, boolean saveToBackend,int calorias,double proteinas,double carbs,double grasas) {
+        if (meal.getUsuario().getGoals().getDailyCalories()>=calorias){
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                builder.setTitle("Confirm Action");
+                builder.setMessage("Te estás pasando de tu ingesta diaria. ¿Estás seguro de querer añadirla?");
+                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        LinearLayout mealCard = new LinearLayout(context);
+                        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        cardParams.setMargins(0, 8, 0, 8);
+                        mealCard.setLayoutParams(cardParams);
+                        mealCard.setOrientation(LinearLayout.HORIZONTAL);
+                        mealCard.setPadding(16, 16, 16, 16);
+                        mealCard.setGravity(Gravity.CENTER_VERTICAL);
 
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.WHITE);
-        background.setCornerRadius(16f);
-        mealCard.setBackground(background);
-        mealCard.setElevation(4f);
+                        GradientDrawable background = new GradientDrawable();
+                        background.setColor(Color.WHITE);
+                        background.setCornerRadius(16f);
+                        mealCard.setBackground(background);
+                        mealCard.setElevation(4f);
 
-        ImageView mealImage = new ImageView(context);
-        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(140, 140);
-        imageParams.setMargins(0, 0, 8, 0);
-        mealImage.setLayoutParams(imageParams);
-        mealImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        if (meal.getFoto() != null && !meal.getFoto().isEmpty()) {
-            Glide.with(context).load(meal.getFoto()).into(mealImage);
-        }
+                        ImageView mealImage = new ImageView(context);
+                        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(140, 140);
+                        imageParams.setMargins(0, 0, 8, 0);
+                        mealImage.setLayoutParams(imageParams);
+                        mealImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        if (meal.getFoto() != null && !meal.getFoto().isEmpty()) {
+                            Glide.with(context).load(meal.getFoto()).into(mealImage);
+                        }
 
-        TextView nameText = new TextView(context);
-        nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        nameText.setText(meal.getName());
-        nameText.setTextSize(20);
-        nameText.setTextColor(Color.BLACK);
-        nameText.setTypeface(null, Typeface.BOLD);
-        nameText.setPadding(8, 0, 8, 0);
+                        TextView nameText = new TextView(context);
+                        nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                        nameText.setText(meal.getName());
+                        nameText.setTextSize(20);
+                        nameText.setTextColor(Color.BLACK);
+                        nameText.setTypeface(null, Typeface.BOLD);
+                        nameText.setPadding(8, 0, 8, 0);
 
-        LinearLayout nutritionLayout = new LinearLayout(context);
-        nutritionLayout.setOrientation(LinearLayout.VERTICAL);
-        TextView caloriesText = new TextView(context);
-        caloriesText.setText(String.format(Locale.getDefault(), "%d kcal", meal.getCalories()));
-        caloriesText.setTextSize(20);
-        caloriesText.setTextColor(Color.parseColor("#4CAF50"));
-        TextView macrosText = new TextView(context);
-        macrosText.setText(String.format(Locale.getDefault(), "P: %.1fg C: %.1fg F: %.1fg",
-                meal.getProtein(), meal.getCarbs(), meal.getFats()));
-        macrosText.setTextSize(12);
-        macrosText.setTextColor(Color.GRAY);
-        nutritionLayout.addView(caloriesText);
-        nutritionLayout.addView(macrosText);
+                        LinearLayout nutritionLayout = new LinearLayout(context);
+                        nutritionLayout.setOrientation(LinearLayout.VERTICAL);
+                        TextView caloriesText = new TextView(context);
+                        caloriesText.setText(String.format(Locale.getDefault(), "%d kcal", meal.getCalories()));
+                        caloriesText.setTextSize(20);
+                        caloriesText.setTextColor(Color.parseColor("#4CAF50"));
+                        TextView macrosText = new TextView(context);
+                        macrosText.setText(String.format(Locale.getDefault(), "P: %.1fg C: %.1fg F: %.1fg",
+                                meal.getProtein(), meal.getCarbs(), meal.getFats()));
+                        macrosText.setTextSize(12);
+                        macrosText.setTextColor(Color.GRAY);
+                        nutritionLayout.addView(caloriesText);
+                        nutritionLayout.addView(macrosText);
 
-        ImageView deleteImage = new ImageView(context);
-        deleteImage.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
-        deleteImage.setImageResource(R.drawable.ic_delete);
-        deleteImage.setContentDescription("Delete meal");
+                        ImageView deleteImage = new ImageView(context);
+                        deleteImage.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
+                        deleteImage.setImageResource(R.drawable.ic_delete);
+                        deleteImage.setContentDescription("Delete meal");
 
-        mealCard.addView(mealImage);
-        mealCard.addView(nameText);
-        mealCard.addView(nutritionLayout);
-        mealCard.addView(deleteImage);
-        linearLayout.addView(mealCard);
+                        mealCard.addView(mealImage);
+                        mealCard.addView(nameText);
+                        mealCard.addView(nutritionLayout);
+                        mealCard.addView(deleteImage);
+                        linearLayout.addView(mealCard);
 
-        // API call to save meal
-        JsonObject mealJson = new JsonObject();
-        mealJson.addProperty("name", meal.getName());
-        mealJson.addProperty("calories", meal.getCalories());
-        mealJson.addProperty("protein", meal.getProtein());
-        mealJson.addProperty("carbs", meal.getCarbs());
-        mealJson.addProperty("fats", meal.getFats());
-        mealJson.addProperty("tipo", meal.getTipo());
-        mealJson.addProperty("fecha", meal.getFecha());
-        mealJson.addProperty("gramos", meal.getGramos());
-        mealJson.addProperty("foto", meal.getFoto());
+                        if (saveToBackend) {
+                            // API call to save meal
+                            JsonObject mealJson = new JsonObject();
+                            mealJson.addProperty("name", meal.getName());
+                            mealJson.addProperty("calories", meal.getCalories());
+                            mealJson.addProperty("protein", meal.getProtein());
+                            mealJson.addProperty("carbs", meal.getCarbs());
+                            mealJson.addProperty("fats", meal.getFats());
+                            mealJson.addProperty("tipo", meal.getTipo());
+                            mealJson.addProperty("fecha", meal.getFecha());
+                            mealJson.addProperty("gramos", meal.getGramos());
+                            mealJson.addProperty("foto", meal.getFoto());
 
-        if (meal.getUsuario() != null) {
-            JsonObject userJson = new JsonObject();
-            userJson.addProperty("id", meal.getUsuario().getId());
-            userJson.addProperty("name", meal.getUsuario().getName());
-            userJson.addProperty("email", meal.getUsuario().getEmail());
-            mealJson.add("usuario", userJson);
-        }
+                            if (meal.getUsuario() != null) {
+                                JsonObject userJson = new JsonObject();
+                                userJson.addProperty("id", meal.getUsuario().getId());
+                                userJson.addProperty("name", meal.getUsuario().getName());
+                                userJson.addProperty("email", meal.getUsuario().getEmail());
+                                userJson.addProperty("age", meal.getUsuario().getAge());
+                                userJson.addProperty("weight", meal.getUsuario().getWeight());
+                                userJson.addProperty("height", meal.getUsuario().getHeight());
+                                mealJson.add("user", userJson);
+                            }
 
-        ApiServiceFood apiService = ApiClient.getClient().create(ApiServiceFood.class);
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), mealJson.toString());
-        Call<JsonElement> call = apiService.addMeal(requestBody);
-        call.enqueue(new Callback<JsonElement>() {
-            @Override
-            public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject responseJson = response.body().getAsJsonObject();
-                    if (responseJson.has("id")) {
-                        meal.setId(responseJson.get("id").getAsString());
-                        deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
+                            ApiServiceFood apiService = ApiClient.getClient().create(ApiServiceFood.class);
+                            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), mealJson.toString());
+                            Call<JsonElement> call = apiService.addMeal(requestBody);
+                            call.enqueue(new Callback<JsonElement>() {
+                                @Override
+                                public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                                    if (response.isSuccessful() && response.body() != null) {
+                                        JsonObject responseJson = response.body().getAsJsonObject();
+                                        if (responseJson.has("id")) {
+                                            meal.setId(responseJson.get("id").getAsString());
+                                            deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
+                                        }
+                                    } else {
+                                        Log.e(TAG, "Failed to save meal: " + response.code());
+                                        Toast.makeText(context, "Failed to save meal", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<JsonElement> call, Throwable t) {
+                                    Log.e(TAG, "Network error: " + t.getMessage());
+                                    Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } else {
+                            // Only set delete listener if meal already has an ID (i.e., it exists in the backend)
+                            if (meal.getId() != null) {
+                                deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
+                            }
+                        }
                     }
-                } else {
-                    Log.e(TAG, "Failed to save meal: " + response.code());
-                    Toast.makeText(context, "Failed to save meal", Toast.LENGTH_SHORT).show();
+                });
+
+                // Negative button (e.g., "Cancel")
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Handle the negative action (e.g., cancel)
+                        dialog.dismiss();
+                    }
+                });
+        }else{
+            LinearLayout mealCard = new LinearLayout(context);
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            cardParams.setMargins(0, 8, 0, 8);
+            mealCard.setLayoutParams(cardParams);
+            mealCard.setOrientation(LinearLayout.HORIZONTAL);
+            mealCard.setPadding(16, 16, 16, 16);
+            mealCard.setGravity(Gravity.CENTER_VERTICAL);
+
+            GradientDrawable background = new GradientDrawable();
+            background.setColor(Color.WHITE);
+            background.setCornerRadius(16f);
+            mealCard.setBackground(background);
+            mealCard.setElevation(4f);
+
+            ImageView mealImage = new ImageView(context);
+            LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(140, 140);
+            imageParams.setMargins(0, 0, 8, 0);
+            mealImage.setLayoutParams(imageParams);
+            mealImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            if (meal.getFoto() != null && !meal.getFoto().isEmpty()) {
+                Glide.with(context).load(meal.getFoto()).into(mealImage);
+            }
+
+            TextView nameText = new TextView(context);
+            nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            nameText.setText(meal.getName());
+            nameText.setTextSize(20);
+            nameText.setTextColor(Color.BLACK);
+            nameText.setTypeface(null, Typeface.BOLD);
+            nameText.setPadding(8, 0, 8, 0);
+
+            LinearLayout nutritionLayout = new LinearLayout(context);
+            nutritionLayout.setOrientation(LinearLayout.VERTICAL);
+            TextView caloriesText = new TextView(context);
+            caloriesText.setText(String.format(Locale.getDefault(), "%d kcal", meal.getCalories()));
+            caloriesText.setTextSize(20);
+            caloriesText.setTextColor(Color.parseColor("#4CAF50"));
+            TextView macrosText = new TextView(context);
+            macrosText.setText(String.format(Locale.getDefault(), "P: %.1fg C: %.1fg F: %.1fg",
+                    meal.getProtein(), meal.getCarbs(), meal.getFats()));
+            macrosText.setTextSize(12);
+            macrosText.setTextColor(Color.GRAY);
+            nutritionLayout.addView(caloriesText);
+            nutritionLayout.addView(macrosText);
+
+            ImageView deleteImage = new ImageView(context);
+            deleteImage.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
+            deleteImage.setImageResource(R.drawable.ic_delete);
+            deleteImage.setContentDescription("Delete meal");
+
+            mealCard.addView(mealImage);
+            mealCard.addView(nameText);
+            mealCard.addView(nutritionLayout);
+            mealCard.addView(deleteImage);
+            linearLayout.addView(mealCard);
+
+            if (saveToBackend) {
+                // API call to save meal
+                JsonObject mealJson = new JsonObject();
+                mealJson.addProperty("name", meal.getName());
+                mealJson.addProperty("calories", meal.getCalories());
+                mealJson.addProperty("protein", meal.getProtein());
+                mealJson.addProperty("carbs", meal.getCarbs());
+                mealJson.addProperty("fats", meal.getFats());
+                mealJson.addProperty("tipo", meal.getTipo());
+                mealJson.addProperty("fecha", meal.getFecha());
+                mealJson.addProperty("gramos", meal.getGramos());
+                mealJson.addProperty("foto", meal.getFoto());
+
+                if (meal.getUsuario() != null) {
+                    JsonObject userJson = new JsonObject();
+                    userJson.addProperty("id", meal.getUsuario().getId());
+                    userJson.addProperty("name", meal.getUsuario().getName());
+                    userJson.addProperty("email", meal.getUsuario().getEmail());
+                    userJson.addProperty("age", meal.getUsuario().getAge());
+                    userJson.addProperty("weight", meal.getUsuario().getWeight());
+                    userJson.addProperty("height", meal.getUsuario().getHeight());
+                    mealJson.add("user", userJson);
+                }
+
+                ApiServiceFood apiService = ApiClient.getClient().create(ApiServiceFood.class);
+                RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), mealJson.toString());
+                Call<JsonElement> call = apiService.addMeal(requestBody);
+                call.enqueue(new Callback<JsonElement>() {
+                    @Override
+                    public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            JsonObject responseJson = response.body().getAsJsonObject();
+                            if (responseJson.has("id")) {
+                                meal.setId(responseJson.get("id").getAsString());
+                                deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
+                            }
+                        } else {
+                            Log.e(TAG, "Failed to save meal: " + response.code());
+                            Toast.makeText(context, "Failed to save meal", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<JsonElement> call, Throwable t) {
+                        Log.e(TAG, "Network error: " + t.getMessage());
+                        Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                // Only set delete listener if meal already has an ID (i.e., it exists in the backend)
+                if (meal.getId() != null) {
+                    deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
                 }
             }
-
-            @Override
-            public void onFailure(Call<JsonElement> call, Throwable t) {
-                Log.e(TAG, "Network error: " + t.getMessage());
-                Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
-            }
-        });
+        }
     }
 
     private void deleteMeal(Meal meal, View mealCard) {
