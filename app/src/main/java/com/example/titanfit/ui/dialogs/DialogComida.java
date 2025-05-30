@@ -172,7 +172,7 @@ public class DialogComida extends DialogFragment {
                 Log.d("user", sharedPreferencesManager.getUser().toString());
 
                 String fecha = (String) getArguments().get("fecha");
-                Meal meal = new Meal(comida.getName(), (int) Math.round((baseCalories/100)*gramos), baseProteins, baseCarbs, baseFats, tipo, fecha, gramos, comida.getImagen(), sharedPreferencesManager.getUser());
+                Meal meal = new Meal(comida.getName(), (int) Math.round((baseCalories/100)*gramos), (int) Math.round((baseProteins/100)*gramos), (int) Math.round((baseCarbs/100)*gramos), (int) Math.round((baseFats/100)*gramos), tipo, fecha, gramos, comida.getImagen(), sharedPreferencesManager.getUser());
 
                 if (mealAddedListener != null) {
                     mealAddedListener.onMealAdded(meal, tipo);

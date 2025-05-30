@@ -173,6 +173,9 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     }
 
     private void updateNutritionUI(int calories, double proteins, double carbs, double fats, UserGoal goals) {
+        if (calories>usuario.getGoals().getDailyCalories()){
+            binding.tvCaloriesLabel.setTextColor(Color.parseColor("#FF0000"));
+        }
         binding.cpiCalories.setMax(goals.getDailyCalories());
         binding.cpiCalories.setProgress(calories);
         binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal", calories, goals.getDailyCalories()));
@@ -236,13 +239,13 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
 
     private void addMealView(LinearLayout linearLayout, Meal meal, boolean saveToBackend, int calorias) {
         if (meal.getUsuario() != null && meal.getUsuario().getGoals() != null && calorias > meal.getUsuario().getGoals().getDailyCalories()) {
-            createMealCard(linearLayout, meal, saveToBackend);
+            createMealCard(linearLayout, meal, saveToBackend,calorias);
         } else {
-            createMealCard(linearLayout, meal, saveToBackend);
+            createMealCard(linearLayout, meal, saveToBackend,calorias);
         }
     }
 
-    private void createMealCard(LinearLayout linearLayout, Meal meal, boolean saveToBackend) {
+    private void createMealCard(LinearLayout linearLayout, Meal meal, boolean saveToBackend,int calorias) {
         LinearLayout mealCard = new LinearLayout(context);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -333,7 +336,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                         JsonObject responseJson = response.body().getAsJsonObject();
                         if (responseJson.has("id")) {
                             meal.setId(responseJson.get("id").getAsString());
-                            deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
+                            deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard,calorias));
                         }
                     } else {
                         Log.e(TAG, "Failed to save meal: " + response.code());
@@ -349,12 +352,12 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             });
         } else {
             if (meal.getId() != null) {
-                deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
+                deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard,calorias));
             }
         }
     }
 
-    private void deleteMeal(Meal meal, View mealCard) {
+    private void deleteMeal(Meal meal, View mealCard,int calorias) {
         if (meal.getId() == null) return;
 
         ApiServiceFood apiService = ApiClient.getClient().create(ApiServiceFood.class);
@@ -363,7 +366,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     ((ViewGroup) mealCard.getParent()).removeView(mealCard);
-                    updateTotalsAfterDeletion(meal);
+                    updateTotalsAfterDeletion(meal,calorias);
                 } else {
                     Log.e(TAG, "Failed to delete meal: " + response.code());
                     Toast.makeText(context, "Failed to delete meal", Toast.LENGTH_SHORT).show();
@@ -378,13 +381,12 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         });
     }
 
-    private void updateTotalsAfterDeletion(Meal meal) {
-        int currentCalories = binding.cpiCalories.getProgress();
-        int cals=currentCalories - meal.getCalories();
+    private void updateTotalsAfterDeletion(Meal meal,int calorias) {
+        int cals=calorias - meal.getCalories();
         if (cals>0){
             binding.cpiCalories.setProgress(cals);
             binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal",
-                    currentCalories - meal.getCalories(), binding.cpiCalories.getMax()));
+                    calorias - meal.getCalories(), binding.cpiCalories.getMax()));
 
             updateMacroText(binding.proteinas, meal.getProtein());
             updateMacroText(binding.carbohidratos, meal.getCarbs());
@@ -393,20 +395,24 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             binding.proteinbar.setProgress((int) parseMacro(binding.proteinas.getText().toString()));
             binding.carbbar.setProgress((int) parseMacro(binding.carbohidratos.getText().toString()));
             binding.fatbar.setProgress((int) parseMacro(binding.grasas.getText().toString()));
-        }else{
-            binding.cpiCalories.setProgress(0);
+            if (!(cals>usuario.getGoals().getDailyCalories())){
+                binding.tvCaloriesLabel.setTextColor(Color.parseColor("#000000"));
+            }
+
+        }else {
+            binding.cpiCalories.setProgress(calorias);
             binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal",
                     0, binding.cpiCalories.getMax()));
 
-            updateMacroText(binding.proteinas, 0);
-            updateMacroText(binding.carbohidratos, 0);
-            updateMacroText(binding.grasas, 0);
+            binding.proteinas.setText("Proteinas: "+0+"/"+Math.round(usuario.getGoals().getProteinPercentage())+" g");
+            binding.carbohidratos.setText("Carbohidratos: "+0+"/"+Math.round(usuario.getGoals().getCarbsPercentage())+" g");
+            binding.grasas.setText("Grasas: "+0+"/"+Math.round(usuario.getGoals().getFatsPercentage())+" g");
 
             binding.proteinbar.setProgress(0);
             binding.carbbar.setProgress(0);
             binding.fatbar.setProgress(0);
             binding.tvCaloriesLabel.setTextColor(Color.parseColor("#000000"));
-
+        }
     }
 
     private void updateMacroText(TextView textView, double value) {
