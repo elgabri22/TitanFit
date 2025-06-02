@@ -38,6 +38,7 @@ import com.example.titanfit.network.ApiServiceUser;
 import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.dialogs.DialogAddComida;
 import com.example.titanfit.ui.dialogs.DialogComida;
+import com.example.titanfit.ui.dialogs.DialogFavoritos;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -96,6 +97,18 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             Toast.makeText(context, fecha, Toast.LENGTH_SHORT).show();
         });
 
+        binding.fav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                DialogFavoritos dialogFavoritos = new DialogFavoritos(usuario.getFavoritos().getComidas(), getParentFragmentManager(), MainFragment.this);
+                Bundle bundle=new Bundle();
+                bundle.putString("fecha",fecha);
+                bundle.putString("tipo","Desayuno");
+                dialogFavoritos.setArguments(bundle);
+                dialogFavoritos.show(getParentFragmentManager(), "DialogFavoritos");
+            }
+        });
+
         // Set up button listeners
         setupButtonListeners(goals);
 
@@ -148,13 +161,13 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                     double proteins = 0, carbs = 0, fats = 0;
 
                     for (Meal meal : mealList) {
-                        calories += meal.getCalories();
+                        calories =calories+  meal.getCalories();
                         LinearLayout targetLayout = meal.getTipo().equalsIgnoreCase("Desayuno")
                                 ? binding.llBreakfastItems : binding.llLunchItems;
                         addMealView(targetLayout, meal, false, calories);
-                        proteins += meal.getProtein();
-                        carbs += meal.getCarbs();
-                        fats += meal.getFats();
+                        proteins = proteins+  meal.getProtein();
+                        carbs = carbs+ meal.getCarbs();
+                        fats =fats+meal.getFats();
                     }
 
                     updateNutritionUI(calories, proteins, carbs, fats, goals);
@@ -207,9 +220,9 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             binding.proteinbar.setProgress((int) currentProteins);
             binding.carbbar.setProgress((int) currentCarbs);
             binding.fatbar.setProgress((int) currentFats);
-            binding.proteinas.setText(String.format(Locale.getDefault(), "Proteinas: %.1f/%s g", currentProteins, binding.proteinas.getText().toString().split("/")[1]));
-            binding.carbohidratos.setText(String.format(Locale.getDefault(), "Carbohidratos: %.1f/%s g", currentCarbs, binding.carbohidratos.getText().toString().split("/")[1]));
-            binding.grasas.setText(String.format(Locale.getDefault(), "Grasas: %.1f/%s g", currentFats, binding.grasas.getText().toString().split("/")[1]));
+            binding.proteinas.setText(String.format(Locale.getDefault(), "Proteinas: %.1f/%s ", currentProteins, binding.proteinas.getText().toString().split("/")[1]));
+            binding.carbohidratos.setText(String.format(Locale.getDefault(), "Carbohidratos: %.1f/%s ", currentCarbs, binding.carbohidratos.getText().toString().split("/")[1]));
+            binding.grasas.setText(String.format(Locale.getDefault(), "Grasas: %.1f/%s ", currentFats, binding.grasas.getText().toString().split("/")[1]));
         }else{
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle("Confirm Action");
@@ -358,6 +371,10 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     }
 
     private void deleteMeal(Meal meal, View mealCard,int calorias) {
+        String fullText = binding.tvCaloriesLabel.getText().toString(); // Gets the full string "404 / 1652 kcal"
+        String[] parts = fullText.split("/");
+        String caloriesStr = parts[0].trim(); // Get "404 " and then trim to "404"
+        int currentCalories = Integer.parseInt(caloriesStr);
         if (meal.getId() == null) return;
 
         ApiServiceFood apiService = ApiClient.getClient().create(ApiServiceFood.class);
@@ -366,7 +383,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     ((ViewGroup) mealCard.getParent()).removeView(mealCard);
-                    updateTotalsAfterDeletion(meal,calorias);
+                    updateTotalsAfterDeletion(meal,currentCalories);
                 } else {
                     Log.e(TAG, "Failed to delete meal: " + response.code());
                     Toast.makeText(context, "Failed to delete meal", Toast.LENGTH_SHORT).show();
@@ -400,7 +417,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             }
 
         }else {
-            binding.cpiCalories.setProgress(calorias);
+            binding.cpiCalories.setProgress(0);
             binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal",
                     0, binding.cpiCalories.getMax()));
 

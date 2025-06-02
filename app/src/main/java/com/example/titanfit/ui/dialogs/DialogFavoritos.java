@@ -75,7 +75,7 @@ public class DialogFavoritos extends DialogFragment{
         this.listener = listener;
     }
 
-    @NonNull
+        @NonNull
         @Override
         public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
             AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
@@ -111,6 +111,7 @@ public class DialogFavoritos extends DialogFragment{
 
 
     private void addFoodsFavs(List<Food> favoritos, String fecha, String tipo) {
+        Log.d("comidas",favoritos.toString());
         binding.containerFavoritos.removeAllViews(); // Clear previous views
 
         for (Food food : favoritos) {
