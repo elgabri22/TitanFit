@@ -28,4 +28,7 @@ public interface ApiServiceUser {
     Call<ResponseBody> generateToken(@Body User user);
     @POST("api/update")
     Call<Void> updateUser(@Body RequestBody user);
+
+    @POST("/api/delete/{id}")
+    Call<Void> deleteUser(@Path("id")String id);
 }

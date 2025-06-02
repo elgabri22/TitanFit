@@ -6,6 +6,7 @@ import static androidx.core.util.TypedValueCompat.dpToPx;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -14,16 +15,20 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
@@ -45,6 +50,7 @@ import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +91,7 @@ public class DialogFavoritos extends DialogFragment{
             String fecha=getArguments().getString("fecha");
             String tipo=getArguments().getString("tipo");
 
-            addFoodsFavs(this.comidas,fecha,tipo);
+            addFoodsFavs(this.comidas,fecha);
 
 
             builder.setView(view);
@@ -110,119 +116,160 @@ public class DialogFavoritos extends DialogFragment{
         }
 
 
-    private void addFoodsFavs(List<Food> favoritos, String fecha, String tipo) {
-        Log.d("comidas",favoritos.toString());
-        binding.containerFavoritos.removeAllViews(); // Clear previous views
+    private void addFoodsFavs(List<Food> favoritos, String fecha) {
+        Log.d("comidas", favoritos.toString());
+        binding.containerFavoritos.removeAllViews(); // Limpiar vistas anteriores
 
-        for (Food food : favoritos) {
-            // Create horizontal layout for the item
-            Log.d("food",food.toString());
+        // --- Contenedor del selector de tipo ---
+        LinearLayout headerLayout = new LinearLayout(requireContext());
+        headerLayout.setOrientation(LinearLayout.VERTICAL);
+        headerLayout.setPadding(16, 32, 16, 16);
+
+        // Etiqueta
+        TextView tipoLabel = new TextView(requireContext());
+        tipoLabel.setText("Selecciona tipo de comida:");
+        tipoLabel.setTextSize(16);
+        tipoLabel.setTextColor(Color.DKGRAY);
+        tipoLabel.setPadding(0, 20, 0, 70);
+
+        // Spinner
+        Spinner tipoSpinner = new Spinner(requireContext(), Spinner.MODE_DROPDOWN);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                Arrays.asList("Desayuno", "Almuerzo")
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        tipoSpinner.setAdapter(adapter);
+
+        LinearLayout.LayoutParams spinnerParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        spinnerParams.setMargins(0, 0, 0, 24); // Más espacio debajo del spinner
+        tipoSpinner.setLayoutParams(spinnerParams);
+
+        headerLayout.addView(tipoLabel);
+        headerLayout.addView(tipoSpinner);
+        binding.containerFavoritos.addView(headerLayout);
+
+        // --- Lista de comidas favoritas ---
+        for (int i = 0; i < favoritos.size(); i++) {
+            Food food = favoritos.get(i);
+            Log.d("food", food.toString());
+
+            // Tarjeta contenedora
+            CardView cardView = new CardView(requireContext());
+            CardView.LayoutParams cardParams = new CardView.LayoutParams(
+                    CardView.LayoutParams.MATCH_PARENT,
+                    CardView.LayoutParams.WRAP_CONTENT
+            );
+
+            if (i == 0) {
+                cardParams.setMargins(16, 32, 16, 32); // Más espacio para la primera
+            } else {
+                cardParams.setMargins(16, 24, 16, 8); // Espaciado entre tarjetas
+            }
+
+            cardView.setLayoutParams(cardParams);
+            cardView.setRadius(24);
+            cardView.setCardElevation(6);
+            cardView.setUseCompatPadding(true);
+
+            // Contenido de la tarjeta
             LinearLayout itemLayout = new LinearLayout(requireContext());
             itemLayout.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            itemParams.setMargins(0, 0, 0, 12);
-            itemLayout.setLayoutParams(itemParams);
-            itemLayout.setPadding(16, 16, 16, 16);
-            itemLayout.setClickable(true);
-            itemLayout.setFocusable(true);
+            itemLayout.setPadding(24, 24, 24, 24);
+            itemLayout.setGravity(Gravity.CENTER_VERTICAL);
 
-            // ImageView for the food image
+            // Imagen
             ImageView imageView = new ImageView(requireContext());
-            LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(100, 100);
-            imgParams.setMarginEnd(12);
+            LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(120, 120);
+            imgParams.setMarginEnd(24);
             imageView.setLayoutParams(imgParams);
-            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            imageView.setBackgroundColor(Color.LTGRAY); // Debug visibility
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
-            // Load image with Glide
             String image = food.getImagen();
             if (image != null && !image.isEmpty()) {
                 try {
-
                     if (image.matches("\\d+")) {
                         Glide.with(requireContext())
                                 .load(Integer.parseInt(image))
                                 .into(imageView);
-                        Log.d("DialogFavoritos", "Loading drawable ID: " + image + " for food: " + food.getName());
-                    } else { // Handle URL
+                    } else {
                         Glide.with(requireContext())
                                 .load(image)
                                 .into(imageView);
-                        Log.d("DialogFavoritos", "Loading image URL: " + image + " for food: " + food.getName());
                     }
                 } catch (NumberFormatException e) {
-                    Log.e("DialogFavoritos", "Invalid drawable ID for food: " + food.getName(), e);
+                    Log.e("DialogFavoritos", "Invalid image ID: " + image, e);
                 }
             }
 
-            // Vertical container for text
+            // Contenedor de texto
             LinearLayout textContainer = new LinearLayout(requireContext());
             textContainer.setOrientation(LinearLayout.VERTICAL);
             LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-                    0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                    0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f
+            );
             textContainer.setLayoutParams(textParams);
 
-            // Food name
             TextView nombre = new TextView(requireContext());
-            nombre.setText(food.getName() != null ? food.getName() : "Unknown Food");
+            nombre.setText(food.getName() != null ? food.getName() : "Nombre desconocido");
             nombre.setTextSize(18);
-            nombre.setTextColor(Color.BLACK);
             nombre.setTypeface(null, Typeface.BOLD);
+            nombre.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
 
-            // Calories
             TextView calorias = new TextView(requireContext());
             calorias.setText(Math.round(food.getCalories()) + " kcal");
             calorias.setTextSize(14);
-            calorias.setTextColor(Color.DKGRAY);
-            LinearLayout.LayoutParams calParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            calParams.topMargin = 4;
-            calorias.setLayoutParams(calParams);
+            calorias.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+            calorias.setPadding(0, 8, 0, 0);
 
-            // Add texts to vertical container
             textContainer.addView(nombre);
             textContainer.addView(calorias);
 
-            // Add image and texts to item layout
-            itemLayout.addView(imageView);
-            itemLayout.addView(textContainer);
-
-            // Plus button
+            // Botón "+"
             Button plusButton = new Button(requireContext());
             plusButton.setText("+");
-            plusButton.setTextSize(24);
+            plusButton.setTextSize(22);
             plusButton.setTextColor(Color.WHITE);
-            plusButton.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.teal_700));
-            plusButton.setPadding(12, 8, 12, 8);
+            plusButton.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.teal_700)));
+            plusButton.setTypeface(null, Typeface.BOLD);
+            plusButton.setElevation(6);
+            plusButton.setPadding(24, 12, 24, 12);
+            plusButton.setAllCaps(false);
 
-            GradientDrawable background = new GradientDrawable();
-            background.setColor(ContextCompat.getColor(requireContext(), R.color.teal_700));
-            background.setCornerRadius(100);
-            plusButton.setBackground(background);
-
-            // Plus button click listener to open DialogComida
             plusButton.setOnClickListener(v -> {
-                if (getActivity() == null || !isAdded()) {
+                if (!isAdded() || getActivity() == null) {
                     Log.e("DialogFavoritos", "Fragment not attached to activity");
                     return;
                 }
-                if (fecha == null || tipo == null) {
+
+                String tipoSeleccionado = tipoSpinner.getSelectedItem().toString();
+                if (fecha == null || tipoSeleccionado == null) {
                     Toast.makeText(requireContext(), "Fecha o tipo no disponibles", Toast.LENGTH_SHORT).show();
-                    Log.e("DialogFavoritos", "Fecha or tipo is null");
                     return;
                 }
-                DialogComida dialogComida = DialogComida.newInstance(food, tipo, fecha);
+
+                DialogComida dialogComida = DialogComida.newInstance(food, tipoSeleccionado, fecha);
                 dialogComida.setOnMealAddedListener(this.listener);
                 dialogComida.show(fragmentManager, "DialogComida");
             });
 
+            // Agregar elementos al layout
+            itemLayout.addView(imageView);
+            itemLayout.addView(textContainer);
             itemLayout.addView(plusButton);
-            binding.containerFavoritos.addView(itemLayout);
+
+            cardView.addView(itemLayout);
+            binding.containerFavoritos.addView(cardView);
         }
     }
+
+
+
+
 
 }

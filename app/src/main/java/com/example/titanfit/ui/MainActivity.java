@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -32,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
     private NavController navController;
+    private User user;
 
     public static final String EXTRA_NAV_DESTINATION = "nav_destination";
 
@@ -43,6 +46,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.appBarMain.toolbar);
+
+        SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(this);
+
+        user=sharedPreferencesManager.getUser();
 
 
         DrawerLayout drawer = binding.drawerLayout;
@@ -99,6 +106,21 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("MainActivity", "Post-layout: Llamando a handleIntentNavigation.");
                 handleIntentNavigation(getIntent());
             });
+
+
+
+
+            View headerView = navigationView.getHeaderView(0);
+
+            TextView usernameTextView = headerView.findViewById(R.id.username);
+            TextView emailTextView = headerView.findViewById(R.id.textView);
+
+            if (user!=null){
+                usernameTextView.setText(user.getName());
+                emailTextView.setText(user.getEmail());
+            }
+
+
 
         } else {
             Log.e("MainActivity", "ERROR: NavHostFragment no encontrado. Revisa tu layout XML.");

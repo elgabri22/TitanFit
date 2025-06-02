@@ -20,6 +20,13 @@
     </fragment>
 
     <fragment
+        android:id="@+id/modifica"
+        android:name="com.example.titanfit.ui.modificadatos.ModificaDatosFragment"
+        android:label="Modifica Datos Usuario"
+        tools:layout="@layout/fragment_modifica_datos">
+    </fragment>
+
+    <fragment
         android:id="@+id/goals"
         android:name="com.example.titanfit.ui.goals.GoalsFragment"
         android:label="Goals"

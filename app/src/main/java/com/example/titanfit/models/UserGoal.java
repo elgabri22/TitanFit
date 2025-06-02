@@ -1,6 +1,8 @@
 package com.example.titanfit.models;
 
-public class UserGoal {
+import java.io.Serializable;
+
+public class UserGoal implements Serializable {
     private int dailyCalories;
     private double carbsPercentage;
     private double proteinPercentage;

@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.titanfit.R;
@@ -28,6 +29,7 @@ import com.example.titanfit.network.ApiServiceUser;
 import com.example.titanfit.ui.Metodos;
 import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.home.HomeFragment;
+import com.google.android.material.navigation.NavigationView;
 
 import java.util.List;
 
@@ -112,6 +114,14 @@ public class GoalsFragment extends Fragment {
                             Bundle bundle=new Bundle();
                             bundle.putSerializable("user",user1);
                             sharedPreferencesManager.saveUser(user1);
+                            NavigationView navigationView = getActivity().findViewById(R.id.nav_view);
+                            View headerView = navigationView.getHeaderView(0);
+
+                            TextView usernameTextView = headerView.findViewById(R.id.username);
+                            TextView emailTextView = headerView.findViewById(R.id.textView);
+
+                            usernameTextView.setText(user1.getName());
+                            emailTextView.setText(user1.getEmail());
                             NavController navController = NavHostFragment.findNavController(GoalsFragment.this);
                             navController.navigate(R.id.action_goals_to_main,bundle);
                         }

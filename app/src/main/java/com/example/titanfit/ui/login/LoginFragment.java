@@ -33,6 +33,7 @@ import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceUser;
 import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.home.HomeFragment;
+import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
 
 import java.security.NoSuchAlgorithmException;
@@ -94,6 +95,14 @@ public class LoginFragment extends Fragment {
                                 @Override
                                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                                     sharedPreferences.saveUser(fetchedUser);
+                                    NavigationView navigationView = getActivity().findViewById(R.id.nav_view);
+                                    View headerView = navigationView.getHeaderView(0);
+
+                                    TextView usernameTextView = headerView.findViewById(R.id.username);
+                                    TextView emailTextView = headerView.findViewById(R.id.textView);
+
+                                    usernameTextView.setText(fetchedUser.getName());
+                                    emailTextView.setText(fetchedUser.getEmail());
                                     Toast.makeText(requireContext(),"Usuario logueado correctamente",Toast.LENGTH_LONG).show();
                                     navController.navigate(R.id.action_login_to_main);
                                 }

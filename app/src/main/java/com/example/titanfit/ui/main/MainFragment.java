@@ -39,6 +39,7 @@ import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.dialogs.DialogAddComida;
 import com.example.titanfit.ui.dialogs.DialogComida;
 import com.example.titanfit.ui.dialogs.DialogFavoritos;
+import com.google.android.material.navigation.NavigationView;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 

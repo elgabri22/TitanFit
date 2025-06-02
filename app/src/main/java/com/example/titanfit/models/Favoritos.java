@@ -1,9 +1,10 @@
 package com.example.titanfit.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Favoritos {
+public class Favoritos implements Serializable {
     private List<Food>comidas;
 
     public Favoritos() {

@@ -8,5 +8,14 @@
             android:id="@+id/nav_cerrar_sesion"
             android:icon="@drawable/cerrarsesion"
             android:title="Cerrar sesión" />
+        <item
+            android:id="@+id/main"
+            android:icon="@drawable/hogar"
+            android:title="Página principal" />
+        <item
+            android:id="@+id/modifica"
+            android:icon="@drawable/edit"
+            android:title="Modificar datos de usuario" />
+
     </group>
 </menu>
