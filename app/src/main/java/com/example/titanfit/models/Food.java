@@ -23,7 +23,6 @@ public class Food implements Serializable {
     public Food() {}
 
     public Food(String name, int calories, double protein, double carbs, double fats,String imagen,String tipo) {
-        this.id = id;
         this.name = name;
         this.calories = calories;
         this.protein = protein;

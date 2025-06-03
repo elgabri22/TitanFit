@@ -31,4 +31,7 @@ public interface ApiServiceUser {
 
     @POST("/api/delete/{id}")
     Call<Void> deleteUser(@Path("id")String id);
+
+    @GET("/meals/{fecha_inicio}/{fecha_fin}/{id_user}")
+    Call<List<Meal>> getMealsWeek(@Path("fecha_inicio") String fecha_inicio,@Path("fecha_fin") String fecha_fin,@Path("id_user") String id_user);
 }

@@ -16,6 +16,11 @@
             android:id="@+id/modifica"
             android:icon="@drawable/edit"
             android:title="Modificar datos de usuario" />
+        <item
+            android:id="@+id/stat"
+            android:icon="@drawable/stat"
+            android:title="Estadísticas" />
+
 
     </group>
 </menu>

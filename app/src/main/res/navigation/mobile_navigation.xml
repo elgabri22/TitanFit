@@ -50,6 +50,11 @@
             android:id="@+id/action_login_to_main"
             app:destination="@id/main" />
     </fragment>
+    <fragment
+        android:id="@+id/stat"
+        android:name="com.example.titanfit.ui.stats.StatFragment"
+        android:label="Estadísticas"
+        tools:layout="@layout/fragment_stat"/>
 
 
 </navigation>
