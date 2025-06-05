@@ -37,7 +37,15 @@
             android:padding="12dp"
             android:inputType="textPersonName"
             android:hint="Nombre de usuario"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="4dp" />
+        <TextView
+            android:id="@+id/tvUsernameError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#B00020"
+            android:visibility="gone"
+            android:textSize="12sp"
+            android:layout_marginBottom="8dp"/>
 
         <!-- Correo -->
         <TextView
@@ -55,7 +63,15 @@
             android:padding="12dp"
             android:inputType="textEmailAddress"
             android:hint="correo@ejemplo.com"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="4dp" />
+        <TextView
+            android:id="@+id/tvEmailError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#B00020"
+            android:visibility="gone"
+            android:textSize="12sp"
+            android:layout_marginBottom="8dp"/>
 
         <!-- Contraseña -->
         <TextView
@@ -73,7 +89,15 @@
             android:padding="12dp"
             android:inputType="textPassword"
             android:hint="Nueva contraseña"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="4dp" />
+        <TextView
+            android:id="@+id/tvPasswordError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#B00020"
+            android:visibility="gone"
+            android:textSize="12sp"
+            android:layout_marginBottom="8dp"/>
 
         <!-- Repetir Contraseña -->
         <TextView
@@ -91,7 +115,15 @@
             android:padding="12dp"
             android:inputType="textPassword"
             android:hint="Repetir contraseña"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="4dp" />
+        <TextView
+            android:id="@+id/tvRepeatPasswordError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#B00020"
+            android:visibility="gone"
+            android:textSize="12sp"
+            android:layout_marginBottom="16dp"/>
 
         <!-- Botón Guardar -->
         <Button

@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,7 +19,6 @@ import com.example.titanfit.databinding.FragmentModificaDatosBinding;
 import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceUser;
-import com.example.titanfit.ui.MainActivity;
 import com.example.titanfit.ui.SharedPreferencesManager;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.Gson;
@@ -35,6 +35,8 @@ public class ModificaDatosFragment extends Fragment {
     private FragmentModificaDatosBinding binding;
     private User user;
 
+    private TextView tvUsernameError, tvEmailError, tvPasswordError, tvRepeatPasswordError;
+
     public static ModificaDatosFragment newInstance() {
         return new ModificaDatosFragment();
     }
@@ -44,28 +46,77 @@ public class ModificaDatosFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentModificaDatosBinding.inflate(inflater, container, false);
 
-        SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
-        user=sharedPreferencesManager.getUser();
+        SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(requireContext());
+        user = sharedPreferencesManager.getUser();
 
         binding.etUsername.setText(user.getName());
         binding.etPassword.setText(user.getPassword());
-        binding.etPassword.setText(user.getPassword());
+        binding.etRepeatPassword.setText(user.getPassword());
         binding.etEmail.setText(user.getEmail());
+
+        // Inicializar los TextView de error
+        tvUsernameError = binding.getRoot().findViewById(R.id.tvUsernameError);
+        tvEmailError = binding.getRoot().findViewById(R.id.tvEmailError);
+        tvPasswordError = binding.getRoot().findViewById(R.id.tvPasswordError);
+        tvRepeatPasswordError = binding.getRoot().findViewById(R.id.tvRepeatPasswordError);
 
         binding.btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (binding.etPassword.getText().toString().equalsIgnoreCase(binding.etRepeatPassword.getText().toString())){
-                    user.setPassword(binding.etPassword.getText().toString());
-                    user.setName(binding.etUsername.getText().toString());
-                    user.setEmail(binding.etEmail.getText().toString());
+                String username = binding.etUsername.getText().toString().trim();
+                String email = binding.etEmail.getText().toString().trim();
+                String password = binding.etPassword.getText().toString();
+                String repeatPassword = binding.etRepeatPassword.getText().toString();
+
+                boolean isValid = true;
+
+                // Resetear visibilidad de errores
+                tvUsernameError.setVisibility(View.GONE);
+                tvEmailError.setVisibility(View.GONE);
+                tvPasswordError.setVisibility(View.GONE);
+                tvRepeatPasswordError.setVisibility(View.GONE);
+
+                // Validar campos vacíos
+                if (username.isEmpty()) {
+                    tvUsernameError.setText("El nombre de usuario no puede estar vacío");
+                    tvUsernameError.setVisibility(View.VISIBLE);
+                    isValid = false;
+                }
+
+                if (email.isEmpty()) {
+                    tvEmailError.setText("El correo electrónico no puede estar vacío");
+                    tvEmailError.setVisibility(View.VISIBLE);
+                    isValid = false;
+                }
+
+                if (password.isEmpty()) {
+                    tvPasswordError.setText("La contraseña no puede estar vacía");
+                    tvPasswordError.setVisibility(View.VISIBLE);
+                    isValid = false;
+                }
+
+                if (repeatPassword.isEmpty()) {
+                    tvRepeatPasswordError.setText("Repite la contraseña");
+                    tvRepeatPasswordError.setVisibility(View.VISIBLE);
+                    isValid = false;
+                }
+
+                // Validar que las contraseñas coincidan
+                if (!password.equals(repeatPassword)) {
+                    tvRepeatPasswordError.setText("Las contraseñas no coinciden");
+                    tvRepeatPasswordError.setVisibility(View.VISIBLE);
+                    isValid = false;
+                }
+
+                if (isValid) {
+                    user.setPassword(password);
+                    user.setName(username);
+                    user.setEmail(email);
                     ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
 
-                    // Convierte el objeto User a JSON usando Gson
                     Gson gson = new Gson();
                     String json = gson.toJson(user);
 
-                    // Crea el RequestBody con el JSON y el tipo MIME adecuado
                     RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
 
                     Call<Void> call = apiService.updateUser(requestBody);
@@ -74,10 +125,9 @@ public class ModificaDatosFragment extends Fragment {
                         @Override
                         public void onResponse(Call<Void> call, Response<Void> response) {
                             if (response.isSuccessful()) {
-                                // Actualización exitosa
-                                System.out.println("Usuario actualizado correctamente");
                                 sharedPreferencesManager.clearUser();
                                 sharedPreferencesManager.saveUser(user);
+
                                 NavigationView navigationView = getActivity().findViewById(R.id.nav_view);
                                 View headerView = navigationView.getHeaderView(0);
 
@@ -86,32 +136,27 @@ public class ModificaDatosFragment extends Fragment {
 
                                 usernameTextView.setText(user.getName());
                                 emailTextView.setText(user.getEmail());
+
+                                Toast.makeText(getContext(), "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
                             } else {
-                                // Error en la respuesta
-                                System.err.println("Error al actualizar usuario: " + response.code());
+                                Toast.makeText(getContext(), "Error al actualizar usuario: " + response.code(), Toast.LENGTH_SHORT).show();
                             }
                         }
 
                         @Override
                         public void onFailure(Call<Void> call, Throwable t) {
-                            // Error en la llamada (red, etc)
                             t.printStackTrace();
+                            Toast.makeText(getContext(), "Error de red", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
             }
         });
+
         binding.btnDeleteAccount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
-
-                // Convierte el objeto User a JSON usando Gson
-                Gson gson = new Gson();
-                String json = gson.toJson(user);
-
-                // Crea el RequestBody con el JSON y el tipo MIME adecuado
-                RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
 
                 Call<Void> call = apiService.deleteUser(user.getId());
 
@@ -119,40 +164,36 @@ public class ModificaDatosFragment extends Fragment {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {
                         if (response.isSuccessful()) {
-                            // Actualización exitosa
-                            System.out.println("Usuario actualizado correctamente");
                             sharedPreferencesManager.clearUser();
                             Intent intent = new Intent(getContext(), SplashActivity.class);
                             startActivity(intent);
+                            Toast.makeText(getContext(), "Cuenta eliminada correctamente", Toast.LENGTH_SHORT).show();
                         } else {
-                            // Error en la respuesta
-                            System.err.println("Error al actualizar usuario: " + response.code());
+                            Toast.makeText(getContext(), "Error al eliminar usuario: " + response.code(), Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onFailure(Call<Void> call, Throwable t) {
-                        // Error en la llamada (red, etc)
                         t.printStackTrace();
+                        Toast.makeText(getContext(), "Error de red", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         });
+
         return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         mViewModel = new ViewModelProvider(this).get(ModificaDatosViewModel.class);
-
-        // TODO: Usa mViewModel para observar datos y bindear a la UI
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null; // Evita memory leaks
+        binding = null;
     }
 }

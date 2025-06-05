@@ -5,7 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.ArrayAdapter; // Asegúrate de que esta importación exista
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -50,29 +50,17 @@ public class StatFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // --- Cargar los datos de la semana actual al iniciar el fragmento ---
+        loadCurrentWeekMeals();
+
         binding.calendar.setOnDateChangeListener((calendarView, year, month, dayOfMonth) -> {
             Calendar selectedDate = Calendar.getInstance();
             selectedDate.set(year, month, dayOfMonth);
-            selectedDate.setFirstDayOfWeek(Calendar.MONDAY);
 
-            // Lunes de la semana
-            Calendar startOfWeek = (Calendar) selectedDate.clone();
-            startOfWeek.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-
-            // Domingo de la semana
-            Calendar endOfWeek = (Calendar) selectedDate.clone();
-            endOfWeek.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
-
-            // Fechas en formato dd-MM-yyyy
-            String startDate = String.format(Locale.getDefault(), "%02d-%02d-%d",
-                    startOfWeek.get(Calendar.DAY_OF_MONTH),
-                    startOfWeek.get(Calendar.MONTH) + 1,
-                    startOfWeek.get(Calendar.YEAR));
-
-            String endDate = String.format(Locale.getDefault(), "%02d-%02d-%d",
-                    endOfWeek.get(Calendar.DAY_OF_MONTH),
-                    endOfWeek.get(Calendar.MONTH) + 1,
-                    endOfWeek.get(Calendar.YEAR));
+            // Usa el método auxiliar para obtener las fechas de la semana seleccionada
+            String[] weekDates = getWeekStartAndEndDate(selectedDate);
+            String startDate = weekDates[0];
+            String endDate = weekDates[1];
 
             SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(requireContext());
             User user = sharedPreferencesManager.getUser();
@@ -87,6 +75,71 @@ public class StatFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    // --- Nuevo método para cargar los datos de la semana actual ---
+    private void loadCurrentWeekMeals() {
+        Calendar currentCalendar = Calendar.getInstance(); // Obtiene la fecha y hora actuales
+
+        // Calcula el inicio y fin de la semana actual
+        String[] weekDates = getWeekStartAndEndDate(currentCalendar);
+        String startDate = weekDates[0];
+        String endDate = weekDates[1];
+
+        SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(requireContext());
+        User user = sharedPreferencesManager.getUser();
+
+        fetchMealsForWeek(startDate, endDate, user.getId());
+
+        Toast.makeText(requireContext(), "Cargando semana actual:\nInicio: " + startDate + "\nFin: " + endDate, Toast.LENGTH_LONG).show();
+    }
+
+    // --- Método auxiliar para calcular el lunes y domingo de cualquier semana ---
+    private String[] getWeekStartAndEndDate(Calendar date) {
+        Calendar startOfWeek = (Calendar) date.clone();
+        Calendar endOfWeek = (Calendar) date.clone();
+
+        // Aseguramos que el lunes sea el primer día de la semana para los cálculos
+        startOfWeek.setFirstDayOfWeek(Calendar.MONDAY);
+        endOfWeek.setFirstDayOfWeek(Calendar.MONDAY);
+
+        // Ir al lunes de la semana actual/seleccionada
+        startOfWeek.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+        // Si el día original era un domingo y al setear a Monday el calendario retrocede (comportamiento de algunos locales),
+        // avanzamos una semana para asegurarnos de que sea el lunes de la semana correcta.
+        if (date.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY && startOfWeek.after(date)) {
+            startOfWeek.add(Calendar.WEEK_OF_YEAR, -1);
+        }
+        // Este ajuste final asegura que siempre estemos en el lunes de la semana correcta
+        while (startOfWeek.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
+            startOfWeek.add(Calendar.DATE, -1);
+        }
+
+        // Ir al domingo de la semana actual/seleccionada
+        endOfWeek.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+        // Similar al lunes, si al setear a domingo el calendario retrocede (ej. de lunes a domingo de la semana anterior),
+        // avanzamos una semana para que sea el domingo de la semana correcta.
+        if (date.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY && endOfWeek.before(date)) {
+            endOfWeek.add(Calendar.WEEK_OF_YEAR, 1);
+        }
+        // Este ajuste final asegura que siempre estemos en el domingo de la semana correcta
+        while (endOfWeek.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+            endOfWeek.add(Calendar.DATE, 1);
+        }
+
+
+        // Formatear las fechas en dd-MM-yyyy
+        String startDate = String.format(Locale.getDefault(), "%02d-%02d-%d",
+                startOfWeek.get(Calendar.DAY_OF_MONTH),
+                startOfWeek.get(Calendar.MONTH) + 1, // Calendar.MONTH es base 0
+                startOfWeek.get(Calendar.YEAR));
+
+        String endDate = String.format(Locale.getDefault(), "%02d-%02d-%d",
+                endOfWeek.get(Calendar.DAY_OF_MONTH),
+                endOfWeek.get(Calendar.MONTH) + 1, // Calendar.MONTH es base 0
+                endOfWeek.get(Calendar.YEAR));
+
+        return new String[]{startDate, endDate};
     }
 
     private void fetchMealsForWeek(String startDate, String endDate, String userId) {
@@ -115,9 +168,9 @@ public class StatFragment extends Fragment {
                         totalCarbs += meal.getCarbs();
                         totalFat += meal.getFats();
 
-                        // Contar alimentos más consumidos
-                        if (meal.getName() != null) {
-                            String foodName = meal.getName();
+                        // Contar alimentos más consumidos, normalizando el nombre a minúsculas
+                        if (meal.getName() != null && !meal.getName().isEmpty()) {
+                            String foodName = meal.getName().toLowerCase(Locale.getDefault());
                             int count = foodCounts.containsKey(foodName) ? foodCounts.get(foodName) : 0;
                             foodCounts.put(foodName, count + 1);
                         }
@@ -127,6 +180,8 @@ public class StatFragment extends Fragment {
                     binding.totalCalories.setText(String.valueOf(totalCalories));
                     binding.totalProtein.setText(totalProtein + "g");
                     binding.totalCarbs.setText(totalCarbs + "g");
+                    // Assuming you have a totalFat TextView in your layout, update it as well
+                    // binding.totalFat.setText(totalFat + "g");
 
                     // Calcular porcentajes
                     int totalMacros = totalProtein + totalCarbs + totalFat;
@@ -142,7 +197,7 @@ public class StatFragment extends Fragment {
                     List<Map.Entry<String, Integer>> sortedFoods = new ArrayList<>(foodCounts.entrySet());
                     Collections.sort(sortedFoods, (a, b) -> b.getValue() - a.getValue());
 
-                    // Preparar lista para el ListView (Top 5 alimentos)
+                    // Preparar lista para el ListView (Top 3 alimentos)
                     List<String> topFoodsList = new ArrayList<>();
                     int topLimit = 3;
                     int count = 0;
@@ -159,12 +214,14 @@ public class StatFragment extends Fragment {
 
                 } else {
                     Log.e("MealsWeek", "Respuesta no exitosa: " + response.code());
+                    Toast.makeText(requireContext(), "Error al cargar las comidas: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Meal>> call, Throwable t) {
                 Log.e("MealsWeek", "Error en la llamada: " + t.getMessage());
+                Toast.makeText(requireContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

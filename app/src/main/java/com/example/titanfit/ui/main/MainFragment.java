@@ -101,7 +101,9 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         binding.fav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DialogFavoritos dialogFavoritos = new DialogFavoritos(usuario.getFavoritos().getComidas(), getParentFragmentManager(), MainFragment.this);
+                SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
+                User user=sharedPreferencesManager.getUser();
+                DialogFavoritos dialogFavoritos = new DialogFavoritos(user.getFavoritos().getComidas(), getParentFragmentManager(), MainFragment.this);
                 Bundle bundle=new Bundle();
                 bundle.putString("fecha",fecha);
                 bundle.putString("tipo","Desayuno");

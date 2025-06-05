@@ -184,7 +184,7 @@
         <ListView
             android:id="@+id/top_foods_list"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="400dp"
             android:divider="@android:color/darker_gray"
             android:dividerHeight="1dp"
             android:background="@android:color/white"
