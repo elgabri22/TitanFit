@@ -50,6 +50,7 @@ public class LoginFragment extends Fragment {
     private FragmentLoginBinding binding;
     private SharedPreferencesManager sharedPreferences;
     private Gson gson;
+    private int num_clicks=0;
 
     public LoginFragment() {
     }
@@ -84,100 +85,103 @@ public class LoginFragment extends Fragment {
         });
 
         binding.buttonLogin.setOnClickListener(v -> {
-            String email = binding.editTextEmail.getText().toString().trim();
-            String password = binding.editTextPassword.getText().toString().trim();
+            if (num_clicks==0){
+                String email = binding.editTextEmail.getText().toString().trim();
+                String password = binding.editTextPassword.getText().toString().trim();
 
-            // Limpiar errores previos
-            binding.textViewErrorEmail.setVisibility(View.GONE);
-            binding.textViewErrorPassword.setVisibility(View.GONE);
+                // Limpiar errores previos
+                binding.textViewErrorEmail.setVisibility(View.GONE);
+                binding.textViewErrorPassword.setVisibility(View.GONE);
 
-            boolean isValid = true;
+                boolean isValid = true;
 
-            if (email.isEmpty()) {
-                binding.textViewErrorEmail.setText("Campo obligatorio");
-                binding.textViewErrorEmail.setVisibility(View.VISIBLE);
-                isValid = false;
-            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                binding.textViewErrorEmail.setText("Email inválido");
-                binding.textViewErrorEmail.setVisibility(View.VISIBLE);
-                isValid = false;
-            }
+                if (email.isEmpty()) {
+                    binding.textViewErrorEmail.setText("Campo obligatorio");
+                    binding.textViewErrorEmail.setVisibility(View.VISIBLE);
+                    isValid = false;
+                } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    binding.textViewErrorEmail.setText("Email inválido");
+                    binding.textViewErrorEmail.setVisibility(View.VISIBLE);
+                    isValid = false;
+                }
 
-            if (password.isEmpty()) {
-                binding.textViewErrorPassword.setText("Campo obligatorio");
-                binding.textViewErrorPassword.setVisibility(View.VISIBLE);
-                isValid = false;
-            }
+                if (password.isEmpty()) {
+                    binding.textViewErrorPassword.setText("Campo obligatorio");
+                    binding.textViewErrorPassword.setVisibility(View.VISIBLE);
+                    isValid = false;
+                }
 
-            if (!isValid) {
-                return; // No continuar con la llamada a API si hay errores
-            }
+                if (!isValid) {
+                    return; // No continuar con la llamada a API si hay errores
+                }
 
-            ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
-            Call<User> usuarioCall = apiService.getUser(email);
+                ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
+                Call<User> usuarioCall = apiService.getUser(email);
 
-            usuarioCall.enqueue(new Callback<User>() {
-                @Override
-                public void onResponse(Call<User> call, Response<User> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        User fetchedUser = response.body();
+                usuarioCall.enqueue(new Callback<User>() {
+                    @Override
+                    public void onResponse(Call<User> call, Response<User> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            User fetchedUser = response.body();
 
-                        // Aquí debes comparar la contraseña correctamente (texto plano o hashed)
-                        if (!fetchedUser.getPassword().equals(password)) {
+                            // Aquí debes comparar la contraseña correctamente (texto plano o hashed)
+                            if (!fetchedUser.getPassword().equals(password)) {
+                                binding.textViewErrorPassword.setVisibility(View.VISIBLE);
+                                binding.textViewErrorPassword.setText("La contraseña debe de contener mínimo 8 caracteres de los cuales, uno en mayúscula, otro en minúscula y sun símbolo");
+                                return;
+                            }
+
+                            if (!fetchedUser.getEmail().equals(email)) {
+                                binding.textViewErrorEmail.setVisibility(View.VISIBLE);
+                                binding.textViewErrorEmail.setText("Email incorrecto");
+                                return;
+                            }
+
+                            fetchedUser.setPassword(PasswordUtils.generateSecurePassword(fetchedUser.getPassword()));
+
+                            Call<ResponseBody> tokenCall = apiService.generateToken(fetchedUser);
+                            tokenCall.enqueue(new Callback<ResponseBody>() {
+                                @Override
+                                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                                    sharedPreferences.saveUser(fetchedUser);
+
+                                    NavigationView navigationView = getActivity().findViewById(R.id.nav_view);
+                                    View headerView = navigationView.getHeaderView(0);
+
+                                    TextView usernameTextView = headerView.findViewById(R.id.username);
+                                    TextView emailTextView = headerView.findViewById(R.id.textView);
+
+                                    usernameTextView.setText(fetchedUser.getName());
+                                    emailTextView.setText(fetchedUser.getEmail());
+
+                                    Toast.makeText(requireContext(), "Usuario logueado correctamente", Toast.LENGTH_LONG).show();
+                                    navController.navigate(R.id.action_login_to_main);
+                                }
+
+                                @Override
+                                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                                    Log.e(TAG, "Error al generar el token: " + t.getMessage());
+                                    Toast.makeText(requireContext(), "Error al generar token", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } else {
                             binding.textViewErrorPassword.setVisibility(View.VISIBLE);
                             binding.textViewErrorPassword.setText("La contraseña debe de contener mínimo 8 caracteres de los cuales, uno en mayúscula, otro en minúscula y sun símbolo");
-                            return;
-                        }
-
-                        if (!fetchedUser.getEmail().equals(email)) {
                             binding.textViewErrorEmail.setVisibility(View.VISIBLE);
                             binding.textViewErrorEmail.setText("Email incorrecto");
-                            return;
                         }
+                    }
 
-                        fetchedUser.setPassword(PasswordUtils.generateSecurePassword(fetchedUser.getPassword()));
-
-                        Call<ResponseBody> tokenCall = apiService.generateToken(fetchedUser);
-                        tokenCall.enqueue(new Callback<ResponseBody>() {
-                            @Override
-                            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                                sharedPreferences.saveUser(fetchedUser);
-
-                                NavigationView navigationView = getActivity().findViewById(R.id.nav_view);
-                                View headerView = navigationView.getHeaderView(0);
-
-                                TextView usernameTextView = headerView.findViewById(R.id.username);
-                                TextView emailTextView = headerView.findViewById(R.id.textView);
-
-                                usernameTextView.setText(fetchedUser.getName());
-                                emailTextView.setText(fetchedUser.getEmail());
-
-                                Toast.makeText(requireContext(), "Usuario logueado correctamente", Toast.LENGTH_LONG).show();
-                                navController.navigate(R.id.action_login_to_main);
-                            }
-
-                            @Override
-                            public void onFailure(Call<ResponseBody> call, Throwable t) {
-                                Log.e(TAG, "Error al generar el token: " + t.getMessage());
-                                Toast.makeText(requireContext(), "Error al generar token", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    } else {
+                    @Override
+                    public void onFailure(Call<User> call, Throwable t) {
                         binding.textViewErrorPassword.setVisibility(View.VISIBLE);
                         binding.textViewErrorPassword.setText("La contraseña debe de contener mínimo 8 caracteres de los cuales, uno en mayúscula, otro en minúscula y sun símbolo");
                         binding.textViewErrorEmail.setVisibility(View.VISIBLE);
                         binding.textViewErrorEmail.setText("Email incorrecto");
                     }
-                }
-
-                @Override
-                public void onFailure(Call<User> call, Throwable t) {
-                    binding.textViewErrorPassword.setVisibility(View.VISIBLE);
-                    binding.textViewErrorPassword.setText("La contraseña debe de contener mínimo 8 caracteres de los cuales, uno en mayúscula, otro en minúscula y sun símbolo");
-                    binding.textViewErrorEmail.setVisibility(View.VISIBLE);
-                    binding.textViewErrorEmail.setText("Email incorrecto");
-                }
-            });
+                });
+            }
+            num_clicks++;
         });
 
         return view;

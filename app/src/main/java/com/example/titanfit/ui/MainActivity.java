@@ -1,5 +1,6 @@
 package com.example.titanfit.ui;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,17 +18,14 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.navigation.NavOptions; // ¡Asegúrate de tener esta importación!
+import androidx.navigation.NavOptions;
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.ActivityMainBinding;
-import com.example.titanfit.models.Food;
 import com.example.titanfit.models.User;
-import com.example.titanfit.ui.dialogs.DialogAddComida;
-import com.example.titanfit.ui.dialogs.DialogFavoritos;
 import com.google.android.material.navigation.NavigationView;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections; // Para Collections.singleton
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +33,12 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private NavController navController;
     private User user;
+    private DrawerLayout drawer;
+    private final Set<Integer> destinationsWithActiveDrawer = Set.of(
+            R.id.main,
+            R.id.stat,
+            R.id.modifica
+    );
 
     public static final String EXTRA_NAV_DESTINATION = "nav_destination";
 
@@ -47,12 +51,10 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.appBarMain.toolbar);
 
-        SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(this);
+        SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(this);
+        user = sharedPreferencesManager.getUser();
 
-        user=sharedPreferencesManager.getUser();
-
-
-        DrawerLayout drawer = binding.drawerLayout;
+        drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
 
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
@@ -61,22 +63,50 @@ public class MainActivity extends AppCompatActivity {
         if (navHostFragment != null) {
             navController = navHostFragment.getNavController();
 
-            mAppBarConfiguration = new AppBarConfiguration.Builder(R.id.main)
+            // Configura AppBarConfiguration para que solo R.id.main sea un destino "top-level"
+            mAppBarConfiguration = new AppBarConfiguration.Builder(destinationsWithActiveDrawer)
                     .setOpenableLayout(drawer)
                     .build();
-
-
 
             NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
             NavigationUI.setupWithNavController(navigationView, navController);
 
+            // *** REFUERZO DEL BLOQUEO INICIAL DEL DRAWER ***
+            // Bloquea el drawer por defecto, especialmente si el startDestination no es R.id.main
+            if (!destinationsWithActiveDrawer.contains(navController.getGraph().getStartDestinationId())) {
+                drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                Log.d("DrawerControl", "Drawer bloqueado al inicio (startDestination no es main).");
+            }
+            // ************************************************
+
+            // Añade un listener para controlar el modo de bloqueo del Drawer al cambiar de destino.
+            navController.addOnDestinationChangedListener(new NavController.OnDestinationChangedListener() {
+                @SuppressLint("RestrictedApi")
+                @Override
+                public void onDestinationChanged(@NonNull NavController controller,
+                                                 @NonNull androidx.navigation.NavDestination destination,
+                                                 @androidx.annotation.Nullable Bundle arguments) {
+                    if (destinationsWithActiveDrawer.contains(destination.getId())) {
+                        drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                        Log.d("DrawerControl", "Drawer UNLOCKED para: " + destination.getDisplayName() + " (ID: " + destination.getId() + ")");
+                    } else {
+                        drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                        Log.d("DrawerControl", "Drawer LOCKED_CLOSED para: " + destination.getDisplayName() + " (ID: " + destination.getId() + ")");
+                    }
+
+                    if (destination.getId() == R.id.home) {
+                        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                    } else {
+                        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                    }
+                }
+            });
+
             navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
                 @Override
                 public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-
                     drawer.close();
 
-                    // Maneja la selección del ítem del menú
                     int id = item.getItemId();
 
                     if (id == R.id.nav_cerrar_sesion) {
@@ -85,59 +115,44 @@ public class MainActivity extends AppCompatActivity {
                                 .setPopUpTo(R.id.mobile_navigation, true)
                                 .build();
                         navController.navigate(R.id.home, null, navOptions);
-                        SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(getApplicationContext());
+                        SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(getApplicationContext());
                         sharedPreferencesManager.clearUser();
-                        Toast.makeText(getApplicationContext(),"Sesión cerrada correctamente",Toast.LENGTH_LONG).show();
-
+                        Toast.makeText(getApplicationContext(), "Sesión cerrada correctamente", Toast.LENGTH_LONG).show();
                         return true;
                     } else {
                         return NavigationUI.onNavDestinationSelected(item, navController);
                     }
                 }
             });
-            // *******************************************************************
 
             binding.getRoot().post(() -> {
                 Log.d("MainActivity", "Post-layout: Llamando a handleIntentNavigation.");
                 handleIntentNavigation(getIntent());
             });
-
-            binding.getRoot().post(() -> {
-                Log.d("MainActivity", "Post-layout: Llamando a handleIntentNavigation.");
-                handleIntentNavigation(getIntent());
-            });
-
-
-
 
             View headerView = navigationView.getHeaderView(0);
-
             TextView usernameTextView = headerView.findViewById(R.id.username);
             TextView emailTextView = headerView.findViewById(R.id.textView);
 
-            if (user!=null){
+            if (user != null) {
                 usernameTextView.setText(user.getName());
                 emailTextView.setText(user.getEmail());
             }
-
-
 
         } else {
             Log.e("MainActivity", "ERROR: NavHostFragment no encontrado. Revisa tu layout XML.");
         }
     }
 
-
     private void handleIntentNavigation(Intent intent) {
         if (navController == null) {
-            Log.e("MainActivity", "NavController es null en handleIntentNavigation (después de post). No se puede navegar.");
+            Log.e("MainActivity", "NavController es null en handleIntentNavigation. No se puede navegar.");
             return;
         }
 
         SharedPreferencesManager manager = new SharedPreferencesManager(getApplicationContext());
         User user = manager.getUser();
 
-        // Validamos si usuario o goals son null; si es así, limpiamos SharedPreferences
         if (user == null || user.getGoals() == null) {
             Log.w("MainActivity", "Usuario o goals null, limpiando SharedPreferences.");
             manager.clearUser();
@@ -147,17 +162,17 @@ public class MainActivity extends AppCompatActivity {
             Bundle bundle = intent.getExtras();
             int destinationId = bundle.getInt(EXTRA_NAV_DESTINATION, 0);
 
-            // Validación: si quieren ir a main pero user o goals son null, redirigir a home (o login)
             if (destinationId == R.id.main) {
-                user = manager.getUser();  // Volvemos a obtener después de limpiar, por si acaso
+                user = manager.getUser();
                 if (user == null || user.getGoals() == null) {
                     Log.w("MainActivity", "Después de limpiar, usuario o goals siguen null, redirigiendo a home en vez de main");
-                    destinationId = R.id.home;  // O a login, según tu flujo
+                    destinationId = R.id.home;
                 }
             }
 
             if (destinationId != 0 && destinationId != -1) {
                 try {
+                    // Solo navega si no estás ya en el destino
                     if (navController.getCurrentDestination() == null ||
                             navController.getCurrentDestination().getId() != destinationId) {
 
@@ -188,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
@@ -199,21 +213,36 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        // Handle hamburger menu (navigation drawer toggle)
         if (id == android.R.id.home) {
-            DrawerLayout drawerLayout = findViewById(R.id.drawer_layout); // Replace with your DrawerLayout ID
-            if (drawerLayout != null) {
-                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    drawerLayout.closeDrawer(GravityCompat.START);
+            if (drawer != null) {
+                // Solo abre el drawer si está UNLOCKED (permitido)
+                if (drawer.getDrawerLockMode(GravityCompat.START) == DrawerLayout.LOCK_MODE_UNLOCKED) {
+                    if (drawer.isDrawerOpen(GravityCompat.START)) {
+                        drawer.closeDrawer(GravityCompat.START);
+                    } else {
+                        drawer.openDrawer(GravityCompat.START);
+                    }
                 } else {
-                    drawerLayout.openDrawer(GravityCompat.START);
+                    // Si el drawer está bloqueado, el botón home debería actuar como "atrás"
+                    // NavigationUI.navigateUp ya lo maneja por onSupportNavigateUp
+                    // o puedes forzar un onBackPressed() si no quieres depender de NavigationUI aquí
+                    onBackPressed();
                 }
             } else {
-                Log.e("MainActivity", "DrawerLayout is null");
+                Log.e("MainActivity", "DrawerLayout es null en onOptionsItemSelected");
             }
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        // Este método es llamado cuando se pulsa el botón de "atrás" de la Toolbar
+        // o el icono de hamburguesa (si es un destino top-level para NavigationUI).
+        // NavigationUI se encarga de la navegación hacia atrás o de abrir el drawer.
+        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
+                || super.onSupportNavigateUp();
     }
 }

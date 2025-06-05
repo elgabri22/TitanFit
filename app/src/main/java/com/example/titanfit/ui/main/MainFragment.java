@@ -2,7 +2,6 @@ package com.example.titanfit.ui.main;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -28,7 +27,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.bumptech.glide.Glide;
 import com.example.titanfit.R;
 import com.example.titanfit.databinding.FragmentMainBinding;
-import com.example.titanfit.models.Food;
+import com.example.titanfit.models.Food; // Asegúrate de que esta clase existe si la usas en otro lado
 import com.example.titanfit.models.Meal;
 import com.example.titanfit.models.User;
 import com.example.titanfit.models.UserGoal;
@@ -39,7 +38,7 @@ import com.example.titanfit.ui.SharedPreferencesManager;
 import com.example.titanfit.ui.dialogs.DialogAddComida;
 import com.example.titanfit.ui.dialogs.DialogComida;
 import com.example.titanfit.ui.dialogs.DialogFavoritos;
-import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.navigation.NavigationView; // Asegúrate de que esta clase existe si la usas en otro lado
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -57,12 +56,18 @@ import retrofit2.Response;
 
 public class MainFragment extends Fragment implements DialogComida.OnMealAddedListener {
     private static final String TAG = "MainFragment";
-    private MainViewModel mViewModel;
+    private MainViewModel mViewModel; // Asegúrate de que esta clase MainViewModel existe
     private FragmentMainBinding binding;
     private SharedPreferencesManager manager;
     private Context context;
     private User usuario;
     private String fecha;
+
+    // Variables para acumular las macros y calorías
+    private int currentTotalCalories = 0;
+    private double currentTotalProteins = 0;
+    private double currentTotalCarbs = 0;
+    private double currentTotalFats = 0;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -76,24 +81,26 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         context = requireContext();
         manager = new SharedPreferencesManager(context);
 
-        // Initialize date with current date
+        // Inicializar la fecha con la fecha actual
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
         fecha = sdf.format(calendar.getTime());
 
-        // Initialize UI with user data
+        // Inicializar la UI con los datos del usuario y sus objetivos
         UserGoal goals = initializeUserData();
         if (goals == null) {
             Toast.makeText(context, "Error loading user data", Toast.LENGTH_SHORT).show();
             return binding.getRoot();
         }
 
-        // Fetch initial meals
+        // Obtener comidas iniciales para la fecha actual
         fetchMealsForDate(fecha, goals);
 
-        // Set up calendar listener
+        // Configurar el listener del calendario
         binding.calendar.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
             fecha = String.format(Locale.getDefault(), "%02d-%02d-%d", dayOfMonth, month + 1, year);
+            // Al cambiar la fecha, resetear los acumuladores y volver a cargar las comidas
+            resetMacroTotals();
             fetchMealsForDate(fecha, goals);
             Toast.makeText(context, fecha, Toast.LENGTH_SHORT).show();
         });
@@ -102,21 +109,34 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             @Override
             public void onClick(View view) {
                 SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
-                User user=sharedPreferencesManager.getUser();
+                User user=sharedPreferencesManager.getUser(); // Obtener el usuario actualizado
                 DialogFavoritos dialogFavoritos = new DialogFavoritos(user.getFavoritos().getComidas(), getParentFragmentManager(), MainFragment.this);
                 Bundle bundle=new Bundle();
                 bundle.putString("fecha",fecha);
-                bundle.putString("tipo","Desayuno");
+                bundle.putString("tipo","Desayuno"); // Considera hacer esto dinámico si tienes más tipos
                 dialogFavoritos.setArguments(bundle);
                 dialogFavoritos.show(getParentFragmentManager(), "DialogFavoritos");
             }
         });
 
-        // Set up button listeners
+        // Configurar los listeners de los botones para añadir comidas
         setupButtonListeners(goals);
 
         return binding.getRoot();
     }
+
+    // Método para reiniciar los acumuladores de macros a cero
+    private void resetMacroTotals() {
+        currentTotalCalories = 0;
+        currentTotalProteins = 0;
+        currentTotalCarbs = 0;
+        currentTotalFats = 0;
+        // Opcional: Actualizar la UI inmediatamente a cero o al estado inicial
+        if (usuario != null && usuario.getGoals() != null) {
+            updateNutritionUI(0, 0, 0, 0, usuario.getGoals());
+        }
+    }
+
 
     private UserGoal initializeUserData() {
         usuario = getArguments() != null ? (User) getArguments().getSerializable("user") : null;
@@ -125,9 +145,9 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         }
 
         if (usuario != null && usuario.getGoals() != null) {
-            UserGoal goals = usuario.getGoals();
-            updateNutritionUI(0, 0, 0, 0, goals);
-            return goals;
+            // No actualizar la UI aquí con 0s si fetchMealsForDate va a hacerlo después
+            // updateNutritionUI(0, 0, 0, 0, goals); // Esto ya no es necesario aquí
+            return usuario.getGoals();
         }
         Log.e(TAG, "User or goals are null");
         return null;
@@ -136,6 +156,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     private void setupButtonListeners(UserGoal goals) {
         binding.addbreakfast.setOnClickListener(v -> openDialogAddComida("Desayuno"));
         binding.addlunch.setOnClickListener(v -> openDialogAddComida("Comida"));
+        // Aquí podrías añadir más botones como adddinner, addsnack, etc.
     }
 
     private void openDialogAddComida(String tipo) {
@@ -160,23 +181,31 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                     binding.llBreakfastItems.removeAllViews();
                     binding.llLunchItems.removeAllViews();
 
-                    int calories = 0;
-                    double proteins = 0, carbs = 0, fats = 0;
+                    // Reiniciar los acumuladores antes de sumar las comidas de la fecha
+                    currentTotalCalories = 0;
+                    currentTotalProteins = 0;
+                    currentTotalCarbs = 0;
+                    currentTotalFats = 0;
 
                     for (Meal meal : mealList) {
-                        calories =calories+  meal.getCalories();
+                        currentTotalCalories += meal.getCalories();
+                        currentTotalProteins += meal.getProtein();
+                        currentTotalCarbs += meal.getCarbs();
+                        currentTotalFats += meal.getFats();
+
                         LinearLayout targetLayout = meal.getTipo().equalsIgnoreCase("Desayuno")
                                 ? binding.llBreakfastItems : binding.llLunchItems;
-                        addMealView(targetLayout, meal, false, calories);
-                        proteins = proteins+  meal.getProtein();
-                        carbs = carbs+ meal.getCarbs();
-                        fats =fats+meal.getFats();
+                        // Pasar 'false' para saveToBackend ya que estas comidas ya están en el backend
+                        addMealView(targetLayout, meal, false);
                     }
 
-                    updateNutritionUI(calories, proteins, carbs, fats, goals);
+                    // Actualizar la UI con los totales calculados
+                    updateNutritionUI(currentTotalCalories, currentTotalProteins, currentTotalCarbs, currentTotalFats, goals);
                 } else {
-                    Log.e(TAG, "Request failed. Code: " + response.code());
+                    Log.e(TAG, "Request failed. Code: " + response.code() + " Message: " + response.message());
                     Toast.makeText(context, "Failed to load meals", Toast.LENGTH_SHORT).show();
+                    // Si no hay comidas o la llamada falla, asegúrate de que la UI refleje cero o un estado inicial
+                    updateNutritionUI(0, 0, 0, 0, goals);
                 }
             }
 
@@ -184,20 +213,32 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             public void onFailure(Call<List<Meal>> call, Throwable t) {
                 Log.e(TAG, "Network error: " + t.getMessage());
                 Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                // En caso de error de red, resetear la UI a cero o un estado inicial
+                updateNutritionUI(0, 0, 0, 0, goals);
             }
         });
     }
 
     private void updateNutritionUI(int calories, double proteins, double carbs, double fats, UserGoal goals) {
-        if (calories>usuario.getGoals().getDailyCalories()){
-            binding.tvCaloriesLabel.setTextColor(Color.parseColor("#FF0000"));
+        if (calories > goals.getDailyCalories()){
+            binding.tvCaloriesLabel.setTextColor(Color.parseColor("#FF0000")); // Rojo si se excede
+        } else {
+            binding.tvCaloriesLabel.setTextColor(Color.BLACK); // Negro si está dentro del límite
         }
         binding.cpiCalories.setMax(goals.getDailyCalories());
         binding.cpiCalories.setProgress(calories);
         binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal", calories, goals.getDailyCalories()));
+
+        // Asegúrate de que las barras de progreso no se pasen de su máximo si los objetivos no están definidos
+        // O define los máximos de las barras de progreso si son distintos a los objetivos
+        binding.proteinbar.setMax((int) Math.round(goals.getProteinPercentage()));
+        binding.carbbar.setMax((int) Math.round(goals.getCarbsPercentage()));
+        binding.fatbar.setMax((int) Math.round(goals.getFatsPercentage()));
+
         binding.proteinbar.setProgress((int) proteins);
         binding.carbbar.setProgress((int) carbs);
         binding.fatbar.setProgress((int) fats);
+
         binding.proteinas.setText(String.format(Locale.getDefault(), "Proteinas: %.1f/%d g", proteins, Math.round(goals.getProteinPercentage())));
         binding.carbohidratos.setText(String.format(Locale.getDefault(), "Carbohidratos: %.1f/%d g", carbs, Math.round(goals.getCarbsPercentage())));
         binding.grasas.setText(String.format(Locale.getDefault(), "Grasas: %.1f/%d g", fats, Math.round(goals.getFatsPercentage())));
@@ -205,63 +246,60 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
 
     @Override
     public void onMealAdded(Meal meal, String tipo) {
-        // Update UI
-        int currentCalories = binding.cpiCalories.getProgress() + meal.getCalories();
-        double currentProteins = parseMacro(binding.proteinas.getText().toString()) + meal.getProtein();
-        double currentCarbs = parseMacro(binding.carbohidratos.getText().toString()) + meal.getCarbs();
-        double currentFats = parseMacro(binding.grasas.getText().toString()) + meal.getFats();
-        if (currentCalories<=usuario.getGoals().getDailyCalories()){
+        // Calcular los nuevos totales antes de decidir si añadir o no
+        int newTotalCalories = currentTotalCalories + meal.getCalories();
+        double newTotalProteins = currentTotalProteins + meal.getProtein();
+        double newTotalCarbs = currentTotalCarbs + meal.getCarbs();
+        double newTotalFats = currentTotalFats + meal.getFats();
+
+        if (newTotalCalories <= usuario.getGoals().getDailyCalories()){
+            // Si no se excede, actualizar los acumuladores y la UI
+            currentTotalCalories = newTotalCalories;
+            currentTotalProteins = newTotalProteins;
+            currentTotalCarbs = newTotalCarbs;
+            currentTotalFats = newTotalFats;
+
             LinearLayout targetLayout = meal.getTipo().equalsIgnoreCase("Desayuno")
                     ? binding.llBreakfastItems : binding.llLunchItems;
-            addMealView(targetLayout, meal, true, currentCalories);
+            addMealView(targetLayout, meal, true); // Pasar 'true' para saveToBackend
 
             Log.d(TAG, "Meal added: " + meal.getName() + ", Calories: " + meal.getCalories());
 
-            // Update UI after adding meal
-            binding.cpiCalories.setProgress(currentCalories);
-            binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal", currentCalories, binding.cpiCalories.getMax()));
-            binding.proteinbar.setProgress((int) currentProteins);
-            binding.carbbar.setProgress((int) currentCarbs);
-            binding.fatbar.setProgress((int) currentFats);
-            binding.proteinas.setText(String.format(Locale.getDefault(), "Proteinas: %.1f/%s ", currentProteins, binding.proteinas.getText().toString().split("/")[1]));
-            binding.carbohidratos.setText(String.format(Locale.getDefault(), "Carbohidratos: %.1f/%s ", currentCarbs, binding.carbohidratos.getText().toString().split("/")[1]));
-            binding.grasas.setText(String.format(Locale.getDefault(), "Grasas: %.1f/%s ", currentFats, binding.grasas.getText().toString().split("/")[1]));
-        }else{
+            // Actualizar la UI con los nuevos totales
+            updateNutritionUI(currentTotalCalories, currentTotalProteins, currentTotalCarbs, currentTotalFats, usuario.getGoals());
+        } else {
+            // Si se excede, mostrar el diálogo de confirmación
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle("Confirm Action");
             builder.setMessage("Te estás pasando de tu ingesta diaria. ¿Estás seguro de querer añadirla?");
             builder.setPositiveButton("Yes", (dialog, which) -> {
+                // Si el usuario confirma, actualizar los acumuladores y la UI
+                currentTotalCalories = newTotalCalories;
+                currentTotalProteins = newTotalProteins;
+                currentTotalCarbs = newTotalCarbs;
+                currentTotalFats = newTotalFats;
+
                 LinearLayout targetLayout = meal.getTipo().equalsIgnoreCase("Desayuno")
                         ? binding.llBreakfastItems : binding.llLunchItems;
-                addMealView(targetLayout, meal, true, currentCalories);
+                addMealView(targetLayout, meal, true); // Pasar 'true' para saveToBackend
 
                 Log.d(TAG, "Meal added: " + meal.getName() + ", Calories: " + meal.getCalories());
 
-                // Update UI after adding meal
-                binding.cpiCalories.setProgress(currentCalories);
-                binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal", currentCalories, binding.cpiCalories.getMax()));
-                binding.proteinbar.setProgress((int) currentProteins);
-                binding.carbbar.setProgress((int) currentCarbs);
-                binding.fatbar.setProgress((int) currentFats);
-                binding.proteinas.setText(String.format(Locale.getDefault(), "Proteinas: %.1f/%s g", currentProteins, binding.proteinas.getText().toString().split("/")[1]));
-                binding.carbohidratos.setText(String.format(Locale.getDefault(), "Carbohidratos: %.1f/%s g", currentCarbs, binding.carbohidratos.getText().toString().split("/")[1]));
-                binding.grasas.setText(String.format(Locale.getDefault(), "Grasas: %.1f/%s g", currentFats, binding.grasas.getText().toString().split("/")[1]));
-                binding.tvCaloriesLabel.setTextColor(Color.parseColor("#FF0000"));
+                // Actualizar la UI con los nuevos totales (ya excedidos)
+                updateNutritionUI(currentTotalCalories, currentTotalProteins, currentTotalCarbs, currentTotalFats, usuario.getGoals());
             });
             builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
             builder.show();
         }
     }
 
-    private void addMealView(LinearLayout linearLayout, Meal meal, boolean saveToBackend, int calorias) {
-        if (meal.getUsuario() != null && meal.getUsuario().getGoals() != null && calorias > meal.getUsuario().getGoals().getDailyCalories()) {
-            createMealCard(linearLayout, meal, saveToBackend,calorias);
-        } else {
-            createMealCard(linearLayout, meal, saveToBackend,calorias);
-        }
+    // Se eliminó el parámetro 'calorias' ya que se usa currentTotalCalories
+    private void addMealView(LinearLayout linearLayout, Meal meal, boolean saveToBackend) {
+        createMealCard(linearLayout, meal, saveToBackend);
     }
 
-    private void createMealCard(LinearLayout linearLayout, Meal meal, boolean saveToBackend,int calorias) {
+    // Se eliminó el parámetro 'calorias' ya que se usa currentTotalCalories
+    private void createMealCard(LinearLayout linearLayout, Meal meal, boolean saveToBackend) {
         LinearLayout mealCard = new LinearLayout(context);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -272,7 +310,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         mealCard.setGravity(Gravity.CENTER_VERTICAL);
 
         GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.WHITE);
+        background.setColor(Color.WHITE); // O un color de fondo de tu tema
         background.setCornerRadius(16f);
         mealCard.setBackground(background);
         mealCard.setElevation(4f);
@@ -290,7 +328,7 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         nameText.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         nameText.setText(meal.getName());
         nameText.setTextSize(20);
-        nameText.setTextColor(Color.BLACK);
+        nameText.setTextColor(Color.BLACK); // O un color de texto de tu tema
         nameText.setTypeface(null, Typeface.BOLD);
         nameText.setPadding(8, 0, 8, 0);
 
@@ -299,18 +337,18 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         TextView caloriesText = new TextView(context);
         caloriesText.setText(String.format(Locale.getDefault(), "%d kcal", meal.getCalories()));
         caloriesText.setTextSize(20);
-        caloriesText.setTextColor(Color.parseColor("#4CAF50"));
+        caloriesText.setTextColor(Color.parseColor("#4CAF50")); // Un color para las calorías
         TextView macrosText = new TextView(context);
         macrosText.setText(String.format(Locale.getDefault(), "P: %.1fg C: %.1fg F: %.1fg",
                 meal.getProtein(), meal.getCarbs(), meal.getFats()));
         macrosText.setTextSize(12);
-        macrosText.setTextColor(Color.GRAY);
+        macrosText.setTextColor(Color.GRAY); // Un color para las macros
         nutritionLayout.addView(caloriesText);
         nutritionLayout.addView(macrosText);
 
         ImageView deleteImage = new ImageView(context);
         deleteImage.setLayoutParams(new LinearLayout.LayoutParams(100, 100));
-        deleteImage.setImageResource(R.drawable.ic_delete);
+        deleteImage.setImageResource(R.drawable.ic_delete); // Asegúrate de tener ic_delete
         deleteImage.setContentDescription("Delete meal");
 
         mealCard.addView(mealImage);
@@ -352,10 +390,10 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
                         JsonObject responseJson = response.body().getAsJsonObject();
                         if (responseJson.has("id")) {
                             meal.setId(responseJson.get("id").getAsString());
-                            deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard,calorias));
+                            deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
                         }
                     } else {
-                        Log.e(TAG, "Failed to save meal: " + response.code());
+                        Log.e(TAG, "Failed to save meal: " + response.code() + " Message: " + response.message());
                         Toast.makeText(context, "Failed to save meal", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -368,16 +406,13 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             });
         } else {
             if (meal.getId() != null) {
-                deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard,calorias));
+                deleteImage.setOnClickListener(v -> deleteMeal(meal, mealCard));
             }
         }
     }
 
-    private void deleteMeal(Meal meal, View mealCard,int calorias) {
-        String fullText = binding.tvCaloriesLabel.getText().toString(); // Gets the full string "404 / 1652 kcal"
-        String[] parts = fullText.split("/");
-        String caloriesStr = parts[0].trim(); // Get "404 " and then trim to "404"
-        int currentCalories = Integer.parseInt(caloriesStr);
+    private void deleteMeal(Meal meal, View mealCard) {
+        // Ya no necesitamos obtener currentCalories de la UI aquí
         if (meal.getId() == null) return;
 
         ApiServiceFood apiService = ApiClient.getClient().create(ApiServiceFood.class);
@@ -386,9 +421,9 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     ((ViewGroup) mealCard.getParent()).removeView(mealCard);
-                    updateTotalsAfterDeletion(meal,currentCalories);
+                    updateTotalsAfterDeletion(meal);
                 } else {
-                    Log.e(TAG, "Failed to delete meal: " + response.code());
+                    Log.e(TAG, "Failed to delete meal: " + response.code() + " Message: " + response.message());
                     Toast.makeText(context, "Failed to delete meal", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -401,54 +436,29 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         });
     }
 
-    private void updateTotalsAfterDeletion(Meal meal,int calorias) {
-        int cals=calorias - meal.getCalories();
-        if (cals>0){
-            binding.cpiCalories.setProgress(cals);
-            binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal",
-                    calorias - meal.getCalories(), binding.cpiCalories.getMax()));
+    private void updateTotalsAfterDeletion(Meal meal) {
+        // Restar los valores de la comida eliminada de los totales acumulados
+        currentTotalCalories -= meal.getCalories();
+        currentTotalProteins -= meal.getProtein();
+        currentTotalCarbs -= meal.getCarbs();
+        currentTotalFats -= meal.getFats();
 
-            updateMacroText(binding.proteinas, meal.getProtein());
-            updateMacroText(binding.carbohidratos, meal.getCarbs());
-            updateMacroText(binding.grasas, meal.getFats());
+        // Asegurarse de que los valores no sean negativos
+        currentTotalCalories = Math.max(0, currentTotalCalories);
+        currentTotalProteins = Math.max(0, currentTotalProteins);
+        currentTotalCarbs = Math.max(0, currentTotalCarbs);
+        currentTotalFats = Math.max(0, currentTotalFats);
 
-            binding.proteinbar.setProgress((int) parseMacro(binding.proteinas.getText().toString()));
-            binding.carbbar.setProgress((int) parseMacro(binding.carbohidratos.getText().toString()));
-            binding.fatbar.setProgress((int) parseMacro(binding.grasas.getText().toString()));
-            if (!(cals>usuario.getGoals().getDailyCalories())){
-                binding.tvCaloriesLabel.setTextColor(Color.parseColor("#000000"));
-            }
-
-        }else {
-            binding.cpiCalories.setProgress(0);
-            binding.tvCaloriesLabel.setText(String.format(Locale.getDefault(), "%d/%d kcal",
-                    0, binding.cpiCalories.getMax()));
-
-            binding.proteinas.setText("Proteinas: "+0+"/"+Math.round(usuario.getGoals().getProteinPercentage())+" g");
-            binding.carbohidratos.setText("Carbohidratos: "+0+"/"+Math.round(usuario.getGoals().getCarbsPercentage())+" g");
-            binding.grasas.setText("Grasas: "+0+"/"+Math.round(usuario.getGoals().getFatsPercentage())+" g");
-
-            binding.proteinbar.setProgress(0);
-            binding.carbbar.setProgress(0);
-            binding.fatbar.setProgress(0);
-            binding.tvCaloriesLabel.setTextColor(Color.parseColor("#000000"));
-        }
-    }
-
-    private void updateMacroText(TextView textView, double value) {
-        String text = textView.getText().toString();
-        double current = parseMacro(text);
-        String goal = text.split("/")[1];
-        textView.setText(String.format(Locale.getDefault(), "%s: %.1f/%s",
-                text.split(":")[0], current - value, goal));
-    }
-
-    private double parseMacro(String text) {
-        try {
-            return Double.parseDouble(text.split(": ")[1].split("/")[0]);
-        } catch (Exception e) {
-            Log.e(TAG, "Error parsing macro: " + e.getMessage());
-            return 0;
+        // Actualizar la UI con los nuevos totales
+        // Se pasa usuario.getGoals() directamente, ya que goals es una propiedad del usuario
+        if (usuario != null && usuario.getGoals() != null) {
+            updateNutritionUI(currentTotalCalories, currentTotalProteins, currentTotalCarbs, currentTotalFats, usuario.getGoals());
+        } else {
+            SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
+            User user=sharedPreferencesManager.getUser();
+            Log.e(TAG, "User goals are null after deletion, cannot update UI accurately.");
+            // Considerar resetear la UI a cero o mostrar un mensaje de error
+            updateNutritionUI(0, 0, 0, 0, user.getGoals()); // O un UserGoal por defecto
         }
     }
 
