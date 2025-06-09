@@ -1,7 +1,11 @@
 package com.example.titanfit.ui.main;
 
+import static android.health.connect.datatypes.MealType.MEAL_TYPE_BREAKFAST;
+import static android.health.connect.datatypes.MealType.MEAL_TYPE_LUNCH;
+
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -41,6 +45,8 @@ import com.example.titanfit.ui.dialogs.DialogFavoritos;
 import com.google.android.material.navigation.NavigationView; // Asegúrate de que esta clase existe si la usas en otro lado
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -62,6 +68,9 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     private Context context;
     private User usuario;
     private String fecha;
+    private String currentMealScanning;
+    private static final String MEAL_TYPE_BREAKFAST = "breakfast";
+    private static final String MEAL_TYPE_LUNCH = "lunch";
 
     // Variables para acumular las macros y calorías
     private int currentTotalCalories = 0;
@@ -105,6 +114,22 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
             Toast.makeText(context, fecha, Toast.LENGTH_SHORT).show();
         });
 
+        binding.btnScanBarcodeBreakfast.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                currentMealScanning = MEAL_TYPE_BREAKFAST;
+                startBarcodeScanner();
+            }
+        });
+
+        binding.btnScanBarcodeLunch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                currentMealScanning = MEAL_TYPE_LUNCH;
+                startBarcodeScanner();
+            }
+        });
+
         binding.fav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -123,6 +148,32 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         setupButtonListeners(goals);
 
         return binding.getRoot();
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() == null) {
+                Log.d(TAG, "Escaneo Cancelado");
+                Toast.makeText(getContext(), "Escaneo Cancelado", Toast.LENGTH_SHORT).show();
+            } else {
+                String barcodeContent = result.getContents();
+                String formatName = result.getFormatName();
+
+                Log.d(TAG, "Contenido del código: " + barcodeContent);
+                Log.d(TAG, "Formato: " + formatName);
+            }
+        }
+    }
+
+    private void startBarcodeScanner() {
+        IntentIntegrator integrator = IntentIntegrator.forSupportFragment(this);
+        integrator.setPrompt("Escanea un código de barras");
+        integrator.setBeepEnabled(false);
+        integrator.setOrientationLocked(false);
+        integrator.initiateScan();
     }
 
     // Método para reiniciar los acumuladores de macros a cero

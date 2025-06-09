@@ -15,8 +15,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-
-
         <LinearLayout
             android:id="@+id/llCalendarHeader"
             android:layout_width="0dp"
@@ -143,6 +141,19 @@
             app:layout_constraintTop_toBottomOf="@id/llTopSection"
             app:layout_constraintStart_toStartOf="parent"/>
 
+        <ImageButton
+            android:id="@+id/btnScanBarcodeBreakfast"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/scan"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Escanear Código de Barras Desayuno"
+            android:scaleType="fitCenter"
+            app:layout_constraintTop_toTopOf="@+id/tvBreakfastHeader"
+            app:layout_constraintBottom_toBottomOf="@+id/tvBreakfastHeader"
+            app:layout_constraintStart_toEndOf="@+id/tvBreakfastHeader"
+            android:layout_marginStart="8dp" />
+
         <LinearLayout
             android:id="@+id/llBreakfastItems"
             android:layout_width="0dp"
@@ -176,6 +187,19 @@
             app:layout_constraintTop_toBottomOf="@id/addbreakfast"
             app:layout_constraintStart_toStartOf="parent"/>
 
+        <ImageButton
+            android:id="@+id/btnScanBarcodeLunch"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/scan"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Escanear Código de Barras Almuerzo"
+            android:scaleType="fitCenter"
+            app:layout_constraintTop_toTopOf="@+id/tvLunchHeader"
+            app:layout_constraintBottom_toBottomOf="@+id/tvLunchHeader"
+            app:layout_constraintStart_toEndOf="@+id/tvLunchHeader"
+            android:layout_marginStart="8dp" />
+
         <LinearLayout
             android:id="@+id/llLunchItems"
             android:layout_width="0dp"
@@ -191,12 +215,13 @@
             android:id="@+id/fav"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginLeft="30dp"
             android:src="@drawable/estrella"
             android:background="?attr/selectableItemBackgroundBorderless"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_margin="8dp" />
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="Favoritos" />
 
         <Button
             android:id="@+id/addlunch"
@@ -206,7 +231,8 @@
             android:layout_marginTop="16dp"
             app:layout_constraintTop_toBottomOf="@id/llLunchItems"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

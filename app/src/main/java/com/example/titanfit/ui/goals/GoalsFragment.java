@@ -186,7 +186,7 @@ public class GoalsFragment extends Fragment {
                                     emailTextView.setText(user1.getEmail());
 
                                     NavController navController = NavHostFragment.findNavController(GoalsFragment.this);
-                                    navController.navigate(R.id.action_goals_to_main, bundle);
+                                    navController.navigate(R.id.action_goals_to_login, bundle);
                                 } else {
                                     Toast.makeText(requireContext(), "Error al crear usuario", Toast.LENGTH_SHORT).show();
                                 }
