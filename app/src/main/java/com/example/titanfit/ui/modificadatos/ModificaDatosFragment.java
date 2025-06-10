@@ -142,9 +142,9 @@ public class ModificaDatosFragment extends Fragment {
                                     usernameTextView.setText(user.getName());
                                     emailTextView.setText(user.getEmail());
 
-                                    Toast.makeText(getContext(), "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(requireContext(), "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
                                 } else {
-                                    Toast.makeText(getContext(), "Error al actualizar usuario: " + response.code(), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(requireContext(), "Error al actualizar usuario: " + response.code(), Toast.LENGTH_SHORT).show();
                                 }
                             }
 
