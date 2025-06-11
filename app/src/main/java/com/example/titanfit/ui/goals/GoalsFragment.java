@@ -90,41 +90,49 @@ public class GoalsFragment extends Fragment {
                 if (usuario.isEmpty()) {
                     binding.usuario.setError("Campo obligatorio");
                     binding.usuario.requestFocus();
+                    num_clicks=0;
                     return;
                 }
                 if (email.isEmpty()) {
                     binding.email.setError("Campo obligatorio");
                     binding.email.requestFocus();
+                    num_clicks=0;
                     return;
                 }
                 if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                     binding.email.setError("Email inválido");
                     binding.email.requestFocus();
+                    num_clicks=0;
                     return;
                 }
                 if (password.isEmpty()) {
                     binding.password.setError("Campo obligatorio");
                     binding.password.requestFocus();
+                    num_clicks=0;
                     return;
                 }
                 if (!isPasswordValid(password)) {
                     binding.password.setError("Debe tener mínimo 8 caracteres, mayúscula, minúscula y símbolo");
                     binding.password.requestFocus();
+                    num_clicks=0;
                     return;
                 }
                 if (edadStr.isEmpty()) {
                     binding.edadInput.setError("Campo obligatorio");
                     binding.edadInput.requestFocus();
+                    num_clicks=0;
                     return;
                 }
                 if (alturaStr.isEmpty()) {
                     binding.alturaInput.setError("Campo obligatorio");
                     binding.alturaInput.requestFocus();
+                    num_clicks=0;
                     return;
                 }
                 if (pesoStr.isEmpty()) {
                     binding.pesoInput.setError("Campo obligatorio");
                     binding.pesoInput.requestFocus();
+                    num_clicks=0;
                     return;
                 }
 
@@ -150,13 +158,13 @@ public class GoalsFragment extends Fragment {
                 SharedPreferencesManager sharedPreferencesManager = new SharedPreferencesManager(requireContext());
                 ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
 
-                // 1️⃣ Verificar si el email ya está registrado
                 Call<User> getUserCall = apiService.getUser(email);
                 getUserCall.enqueue(new Callback<User>() {
                     @Override
                     public void onResponse(Call<User> call, Response<User> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             // Usuario ya existe
+                            num_clicks=0;
                             Toast.makeText(requireContext(), "El correo ya está registrado", Toast.LENGTH_SHORT).show();
                             binding.email.setError("Correo ya registrado");
                             binding.email.requestFocus();
@@ -188,6 +196,7 @@ public class GoalsFragment extends Fragment {
                                     NavController navController = NavHostFragment.findNavController(GoalsFragment.this);
                                     navController.navigate(R.id.action_goals_to_login, bundle);
                                 } else {
+                                    num_clicks=0;
                                     Toast.makeText(requireContext(), "Error al crear usuario", Toast.LENGTH_SHORT).show();
                                 }
                             }
@@ -195,6 +204,7 @@ public class GoalsFragment extends Fragment {
                             @Override
                             public void onFailure(Call<User> call, Throwable t) {
                                 Log.e(TAG, "Error: " + t.getMessage());
+                                num_clicks=0;
                                 Toast.makeText(requireContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                             }
                         });

@@ -98,21 +98,25 @@ public class LoginFragment extends Fragment {
                 if (email.isEmpty()) {
                     binding.textViewErrorEmail.setText("Campo obligatorio");
                     binding.textViewErrorEmail.setVisibility(View.VISIBLE);
+                    num_clicks=0;
                     isValid = false;
                 } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                     binding.textViewErrorEmail.setText("Email inválido");
                     binding.textViewErrorEmail.setVisibility(View.VISIBLE);
+                    num_clicks=0;
                     isValid = false;
                 }
 
                 if (password.isEmpty()) {
                     binding.textViewErrorPassword.setText("Campo obligatorio");
                     binding.textViewErrorPassword.setVisibility(View.VISIBLE);
+                    num_clicks=0;
                     isValid = false;
                 }
 
                 if (!isValid) {
-                    return; // No continuar con la llamada a API si hay errores
+                    num_clicks=0;
+                    return;
                 }
 
                 ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
@@ -127,12 +131,14 @@ public class LoginFragment extends Fragment {
                             // Aquí debes comparar la contraseña correctamente (texto plano o hashed)
                             if (!fetchedUser.getPassword().equals(password)) {
                                 binding.textViewErrorPassword.setVisibility(View.VISIBLE);
+                                num_clicks=0;
                                 binding.textViewErrorPassword.setText("La contraseña debe de contener mínimo 8 caracteres de los cuales, uno en mayúscula, otro en minúscula y sun símbolo");
                                 return;
                             }
 
                             if (!fetchedUser.getEmail().equals(email)) {
                                 binding.textViewErrorEmail.setVisibility(View.VISIBLE);
+                                num_clicks=0;
                                 binding.textViewErrorEmail.setText("Email incorrecto");
                                 return;
                             }
@@ -161,11 +167,13 @@ public class LoginFragment extends Fragment {
                                 @Override
                                 public void onFailure(Call<ResponseBody> call, Throwable t) {
                                     Log.e(TAG, "Error al generar el token: " + t.getMessage());
+                                    num_clicks=0;
                                     Toast.makeText(requireContext(), "Error al generar token", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         } else {
                             binding.textViewErrorPassword.setVisibility(View.VISIBLE);
+                            num_clicks=0;
                             binding.textViewErrorPassword.setText("La contraseña debe de contener mínimo 8 caracteres de los cuales, uno en mayúscula, otro en minúscula y sun símbolo");
                             binding.textViewErrorEmail.setVisibility(View.VISIBLE);
                             binding.textViewErrorEmail.setText("Email incorrecto");
@@ -175,6 +183,7 @@ public class LoginFragment extends Fragment {
                     @Override
                     public void onFailure(Call<User> call, Throwable t) {
                         binding.textViewErrorPassword.setVisibility(View.VISIBLE);
+                        num_clicks=0;
                         binding.textViewErrorPassword.setText("La contraseña debe de contener mínimo 8 caracteres de los cuales, uno en mayúscula, otro en minúscula y sun símbolo");
                         binding.textViewErrorEmail.setVisibility(View.VISIBLE);
                         binding.textViewErrorEmail.setText("Email incorrecto");

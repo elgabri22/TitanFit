@@ -1,7 +1,9 @@
 package com.example.titanfit.ui.dialogs;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -16,6 +18,7 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.titanfit.R;
+import com.example.titanfit.SplashActivity;
 import com.example.titanfit.databinding.DialogComidaBinding;
 import com.example.titanfit.models.Food;
 import com.example.titanfit.models.Meal;
@@ -23,6 +26,7 @@ import com.example.titanfit.models.User;
 import com.example.titanfit.network.ApiClient;
 import com.example.titanfit.network.ApiServiceFood;
 import com.example.titanfit.network.ApiServiceUser;
+import com.example.titanfit.ui.MainActivity;
 import com.example.titanfit.ui.SharedPreferencesManager;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -30,7 +34,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
-// import java.time.LocalDate; // No usada en el código proporcionado, se puede eliminar si no se usa
 import java.util.List;
 import java.util.Locale;
 
@@ -85,14 +88,22 @@ public class DialogComida extends DialogFragment {
         binding.textViewTitle.setText(comida != null && comida.getName() != null ? comida.getName() : "Alimento");
         binding.editTextGrams.setText("100");
 
+        binding.buttonAdd.setEnabled(false);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                binding.buttonAdd.setEnabled(true);
+            }
+        }, 2000);
+
         SharedPreferencesManager manager = new SharedPreferencesManager(requireContext());
-        ApiServiceUser apiService = ApiClient.getClient().create(ApiServiceUser.class);
-        Call<User> call = apiService.getUser(manager.getUser().getEmail());
-        call.enqueue(new Callback<User>() {
+        ApiServiceUser apiServiceUser = ApiClient.getClient().create(ApiServiceUser.class); // Renombrado para evitar conflicto con ApiServiceFood
+        Call<User> callUser = apiServiceUser.getUser(manager.getUser().getEmail());
+        callUser.enqueue(new Callback<User>() { // Cambiado a callUser.enqueue
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
-                // *** CORRECCIÓN APLICADA AQUÍ ***
-                if (isAdded() && getContext() != null) { // Comprobación para evitar IllegalStateException
+                if (isAdded() && getContext() != null) {
                     if (response.isSuccessful() && response.body() != null) {
                         User user = response.body();
                         manager.saveUser(user);
@@ -104,7 +115,6 @@ public class DialogComida extends DialogFragment {
                                 if (food != null && food.getName() != null &&
                                         food.getName().trim().equalsIgnoreCase(comida.getName().trim())) {
                                     Log.d(TAG, "Comida encontrada en favoritos: " + food.getName());
-                                    // Usar getContext() en lugar de requireContext() porque ya lo estamos validando
                                     Glide.with(getContext())
                                             .load(R.drawable.added)
                                             .into(binding.buttonFavorite);
@@ -115,14 +125,12 @@ public class DialogComida extends DialogFragment {
                         }
                         if (!added) {
                             Log.d(TAG, "Comida no está en favoritos");
-                            // Usar getContext() en lugar de requireContext() porque ya lo estamos validando
                             Glide.with(getContext())
                                     .load(R.drawable.estrella)
                                     .into(binding.buttonFavorite);
                         }
                     } else {
                         Log.e(TAG, "Error al obtener usuario: Código " + response.code());
-                        // Si falla, aún intentamos cargar de locales, pero con el contexto validado
                         loadLocalFavorites(manager);
                     }
                 } else {
@@ -132,10 +140,8 @@ public class DialogComida extends DialogFragment {
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                // *** CORRECCIÓN APLICADA AQUÍ ***
-                if (isAdded() && getContext() != null) { // Comprobación para evitar IllegalStateException
+                if (isAdded() && getContext() != null) {
                     Log.e(TAG, "Error de red al obtener usuario: " + t.getMessage());
-                    // Si falla, aún intentamos cargar de locales, pero con el contexto validado
                     loadLocalFavorites(manager);
                 } else {
                     Log.w(TAG, "onFailure llamado pero DialogComida ya no está adjunto.");
@@ -143,9 +149,9 @@ public class DialogComida extends DialogFragment {
             }
         });
 
+        // **CORRECCIÓN CLAVE AQUÍ:** Llama a la función correcta para buscar en Open Food Facts
         if (comida != null && comida.getName() != null) {
-            // No necesitas validar getContext() aquí porque estás en onCreateView y el contexto está garantizado
-            busqueda(comida.getName(), 100);
+            searchFoodAndCalculateMacros(comida.getName(), 100);
         } else {
             Toast.makeText(getContext(), "Nombre del alimento no válido", Toast.LENGTH_SHORT).show();
         }
@@ -163,15 +169,13 @@ public class DialogComida extends DialogFragment {
                     try {
                         double grams = Double.parseDouble(s.toString());
                         if (comida != null && comida.getName() != null) {
-                            busqueda(comida.getName(), grams);
+                            calculateForGrams(grams);
                         }
                     } catch (NumberFormatException e) {
                         Log.w(TAG, "Entrada no válida para gramos: " + s.toString());
-                        // updateMacros() ya tiene su propia validación getActivity() != null
                         updateMacros(0, 0, 0, 0);
                     }
                 } else {
-                    // updateMacros() ya tiene su propia validación getActivity() != null
                     updateMacros(0, 0, 0, 0);
                 }
             }
@@ -179,14 +183,14 @@ public class DialogComida extends DialogFragment {
 
         binding.buttonAdd.setOnClickListener(v -> {
             String gramosStr = binding.editTextGrams.getText().toString();
-            double gramos = 0; // Inicializar a 0 por si el parseo falla
+            double gramos = 0;
 
             try {
                 gramos = Double.parseDouble(gramosStr);
             } catch (NumberFormatException e) {
                 Log.e(TAG, "Error al parsear gramos: " + gramosStr, e);
                 Toast.makeText(requireContext(), "Por favor, introduce una cantidad válida en gramos.", Toast.LENGTH_LONG).show();
-                return; // Salir si el valor no es válido
+                return;
             }
 
             if (gramos <= 0){
@@ -198,7 +202,6 @@ public class DialogComida extends DialogFragment {
                 Log.d("user", sharedPreferencesManager.getUser().toString());
 
                 String fecha = (String) getArguments().get("fecha");
-                // Asegúrate de que los valores de baseCalories, Proteins, etc., son los calculados correctamente antes de crear Meal
                 Meal meal = new Meal(comida.getName(),
                         (int) Math.round((baseCalories / 100) * gramos),
                         (int) Math.round((baseProteins / 100) * gramos),
@@ -212,6 +215,10 @@ public class DialogComida extends DialogFragment {
 
                 dismiss();
 
+                // Este fragmento de código busca y cierra un DialogAddComida.
+                // Si ya no usas DialogAddComida (como sugerimos para flujo UPC),
+                // o si DialogComida se abre directamente, esta parte podría no ser necesaria
+                // o necesitaría ajustarse a tu flujo de diálogos.
                 Fragment parentDialog = getParentFragmentManager().findFragmentByTag("DialogAddComida");
                 if (parentDialog instanceof DialogFragment) {
                     ((DialogFragment) parentDialog).dismiss();
@@ -223,15 +230,14 @@ public class DialogComida extends DialogFragment {
         binding.buttonFavorite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // **Validación aquí antes de usar requireContext() o acceder a UI:**
                 if (!isAdded() || getContext() == null) {
                     Log.w(TAG, "ButtonFavorite click pero DialogComida ya no está adjunto.");
-                    return; // Sale si el fragmento no está adjunto
+                    return;
                 }
 
                 SharedPreferencesManager manager = new SharedPreferencesManager(requireContext());
                 User user = manager.getUser();
-                boolean wasAdded = added; // Guardar el estado anterior por si la API falla
+                boolean wasAdded = added;
 
                 if (!added) {
                     user.getFavoritos().addComida(comida);
@@ -254,22 +260,19 @@ public class DialogComida extends DialogFragment {
                 call.enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {
-                        // *** CORRECCIÓN APLICADA AQUÍ ***
-                        if (isAdded() && getContext() != null) { // Comprobación para evitar IllegalStateException
+                        if (isAdded() && getContext() != null) {
                             if (response.isSuccessful()) {
                                 manager.saveUser(user);
-                                Glide.with(getContext()) // Usar getContext()
+                                Glide.with(getContext())
                                         .load(added ? R.drawable.added : R.drawable.estrella)
                                         .into(binding.buttonFavorite);
                                 Toast.makeText(getContext(), added ? "Añadido a favoritos" : "Eliminado de favoritos", Toast.LENGTH_SHORT).show();
                             } else {
-                                // Revertir el estado 'added' si la API falla
                                 added = wasAdded;
-                                // Revertir el estado del usuario si fue modificado antes del fallo
-                                if (!added) { // Si ahora es false, significa que antes era true y falló el remove
-                                    user.getFavoritos().addComida(comida); // Se añade de nuevo
-                                } else { // Si ahora es true, significa que antes era false y falló el add
-                                    user.getFavoritos().removeComida(comida); // Se elimina de nuevo
+                                if (!added) {
+                                    user.getFavoritos().addComida(comida);
+                                } else {
+                                    user.getFavoritos().removeComida(comida);
                                 }
 
                                 String errorMessage = "Error al actualizar usuario. Código: " + response.code();
@@ -280,7 +283,7 @@ public class DialogComida extends DialogFragment {
                                 } catch (IOException e) {
                                     Log.e("API_ERROR", "Error al leer cuerpo de error: " + e.getMessage());
                                 }
-                                Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show(); // Usar getContext()
+                                Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
                                 Log.e("API_ERROR", errorMessage);
                             }
                         } else {
@@ -290,16 +293,14 @@ public class DialogComida extends DialogFragment {
 
                     @Override
                     public void onFailure(Call<Void> call, Throwable t) {
-                        // *** CORRECCIÓN APLICADA AQUÍ ***
-                        if (isAdded() && getContext() != null) { // Comprobación para evitar IllegalStateException
-                            // Revertir el estado 'added' si la API falla
+                        if (isAdded() && getContext() != null) {
                             added = wasAdded;
                             if (!added) {
                                 user.getFavoritos().removeComida(comida);
                             } else {
                                 user.getFavoritos().addComida(comida);
                             }
-                            Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show(); // Usar getContext()
+                            Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_LONG).show();
                             Log.e("API_FAILURE", "Error: ", t);
                         } else {
                             Log.w(TAG, "onFailure (Favorite) llamado pero DialogComida ya no está adjunto.");
@@ -321,46 +322,65 @@ public class DialogComida extends DialogFragment {
         }
     }
 
-    private void busqueda(String foodName, double grams) {
+    // **Este es el método corregido y consolidado para la búsqueda y cálculo de macros**
+    private void searchFoodAndCalculateMacros(String foodName, double grams) {
+        // Asegúrate de usar RetrofitClient.getOpenFoodFactsClient() para la API de Open Food Facts
         ApiServiceFood apiService = ApiClient.getClient().create(ApiServiceFood.class);
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("query", foodName);
 
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), jsonObject.toString());
-        Call<JsonElement> call = apiService.getFoods("655d5ed6", "e26f024577ee0c93c3383d9ff0cdb948", requestBody);
+        // La llamada a la API de Open Food Facts para búsqueda por texto
+        Call<JsonElement> call = apiService.getFoodsOpenFoodFactsByText(foodName, 1); // '1' para formato JSON
 
         call.enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
-                // *** CORRECCIÓN APLICADA AQUÍ ***
-                if (isAdded() && getContext() != null) { // Comprobación para evitar IllegalStateException
+                if (isAdded() && getContext() != null) {
                     if (response.isSuccessful() && response.body() != null) {
                         JsonElement rawResponse = response.body();
-                        Log.d(TAG, "Respuesta completa: " + rawResponse.toString());
+                        Log.d(TAG, "Respuesta Open Food Facts (texto): " + rawResponse.toString());
 
                         if (rawResponse.isJsonObject()) {
                             JsonObject jsonObject = rawResponse.getAsJsonObject();
-                            if (jsonObject.has("foods") && jsonObject.get("foods").isJsonArray()) {
-                                JsonArray foodsArray = jsonObject.getAsJsonArray("foods");
-                                if (foodsArray.size() > 0) {
-                                    JsonObject foodObject = foodsArray.get(0).getAsJsonObject();
-                                    baseCalories = foodObject.has("nf_calories") && !foodObject.get("nf_calories").isJsonNull()
-                                            ? foodObject.get("nf_calories").getAsDouble() : 0.0;
-                                    baseCarbs = foodObject.has("nf_total_carbohydrate") && !foodObject.get("nf_total_carbohydrate").isJsonNull()
-                                            ? foodObject.get("nf_total_carbohydrate").getAsDouble() : 0.0;
-                                    baseProteins = foodObject.has("nf_protein") && !foodObject.get("nf_protein").isJsonNull()
-                                            ? foodObject.get("nf_protein").getAsDouble() : 0.0;
-                                    baseFats = foodObject.has("nf_total_fat") && !foodObject.get("nf_total_fat").isJsonNull()
-                                            ? foodObject.get("nf_total_fat").getAsDouble() : 0.0;
+                            // El array de productos en Open Food Facts se llama "products"
+                            if (jsonObject.has("products") && jsonObject.get("products").isJsonArray()) {
+                                JsonArray productsArray = jsonObject.getAsJsonArray("products");
+                                if (productsArray.size() > 0) {
+                                    JsonObject productObject = productsArray.get(0).getAsJsonObject(); // Tomar el primer resultado
 
-                                    calculateForGrams(grams);
+                                    // Extraer los datos nutricionales del objeto 'nutriments'
+                                    if (productObject.has("nutriments") && productObject.get("nutriments").isJsonObject()) {
+                                        JsonObject nutriments = productObject.getAsJsonObject("nutriments");
+
+                                        // Asigna los valores a las variables base para 100g
+                                        baseCalories = nutriments.has("energy-kcal_100g") && !nutriments.get("energy-kcal_100g").isJsonNull()
+                                                ? nutriments.get("energy-kcal_100g").getAsDouble() : 0.0;
+                                        baseCarbs = nutriments.has("carbohydrates_100g") && !nutriments.get("carbohydrates_100g").isJsonNull()
+                                                ? nutriments.get("carbohydrates_100g").getAsDouble() : 0.0;
+                                        baseProteins = nutriments.has("proteins_100g") && !nutriments.get("proteins_100g").isJsonNull()
+                                                ? nutriments.get("proteins_100g").getAsDouble() : 0.0;
+                                        baseFats = nutriments.has("fat_100g") && !nutriments.get("fat_100g").isJsonNull()
+                                                ? nutriments.get("fat_100g").getAsDouble() : 0.0;
+
+                                        // También actualizamos la imagen si existe
+                                        String imageUrl = productObject.has("image_url") && !productObject.get("image_url").isJsonNull()
+                                                ? productObject.get("image_url").getAsString() : null;
+                                        if (comida != null) {
+                                            comida.setImagen(imageUrl); // Actualiza la URL de la imagen en el objeto Food
+                                        }
+
+                                        // Finalmente, calcula y actualiza las macros en la UI
+                                        calculateForGrams(grams);
+                                    } else {
+                                        Log.w(TAG, "No se encontraron datos de nutrientes en la respuesta del producto.");
+                                        updateMacros(0, 0, 0, 0);
+                                        showError("No se encontraron datos nutricionales para este alimento.");
+                                    }
                                 } else {
-                                    Log.w(TAG, "No se encontraron alimentos en la respuesta.");
+                                    Log.w(TAG, "No se encontraron productos en la respuesta de Open Food Facts.");
                                     updateMacros(0, 0, 0, 0);
                                     showError("No se encontraron datos para este alimento.");
                                 }
                             } else {
-                                Log.w(TAG, "La respuesta JSON no contiene un array 'foods'.");
+                                Log.w(TAG, "La respuesta JSON no contiene un array 'products'.");
                                 updateMacros(0, 0, 0, 0);
                                 showError("Formato de respuesta inválido.");
                             }
@@ -382,23 +402,23 @@ public class DialogComida extends DialogFragment {
                         showError("Error en la llamada a la API: " + response.message());
                     }
                 } else {
-                    Log.w(TAG, "onResponse (busqueda) llamado pero DialogComida ya no está adjunto.");
+                    Log.w(TAG, "onResponse (searchFoodAndCalculateMacros) llamado pero DialogComida ya no está adjunto.");
                 }
             }
 
             @Override
             public void onFailure(Call<JsonElement> call, Throwable t) {
-                // *** CORRECCIÓN APLICADA AQUÍ ***
-                if (isAdded() && getContext() != null) { // Comprobación para evitar IllegalStateException
+                if (isAdded() && getContext() != null) {
                     Log.e(TAG, "Error de red o fallo de la llamada: " + t.getMessage(), t);
                     showError("Error de conexión: " + t.getMessage());
                     updateMacros(0, 0, 0, 0);
                 } else {
-                    Log.w(TAG, "onFailure (busqueda) llamado pero DialogComida ya no está adjunto.");
+                    Log.w(TAG, "onFailure (searchFoodAndCalculateMacros) llamado pero DialogComida ya no está adjunto.");
                 }
             }
         });
     }
+
 
     private void calculateForGrams(double grams) {
         double factor = grams / 100.0;
@@ -411,8 +431,6 @@ public class DialogComida extends DialogFragment {
     }
 
     private void updateMacros(double calories, double carbs, double proteins, double fats) {
-        // La validación `getActivity() != null` es similar a `isAdded() && getContext() != null`
-        // para operaciones de UI. Se mantiene como estaba, pero se podría unificar.
         if (getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 binding.textViewCarbs.setText(String.format(Locale.getDefault(), "%.1f g", carbs));
@@ -424,15 +442,13 @@ public class DialogComida extends DialogFragment {
     }
 
     private void showError(String message) {
-        // Se asegura que el Toast se muestre solo si el contexto es válido
         if (isAdded() && getContext() != null) {
             Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
 
     private void loadLocalFavorites(SharedPreferencesManager manager) {
-        // *** CORRECCIÓN APLICADA AQUÍ ***
-        if (isAdded() && getContext() != null) { // Comprobación para evitar IllegalStateException
+        if (isAdded() && getContext() != null) {
             User user = manager.getUser();
             List<Food> comidasfavoritos = user.getFavoritos().getComidas();
             Log.d(TAG, "Tamaño de comidasfavoritos (local): " + comidasfavoritos.size());
@@ -442,7 +458,7 @@ public class DialogComida extends DialogFragment {
                     if (food != null && food.getName() != null &&
                             food.getName().trim().equalsIgnoreCase(comida.getName().trim())) {
                         Log.d(TAG, "Comida encontrada en favoritos (local): " + food.getName());
-                        Glide.with(getContext()) // Usar getContext()
+                        Glide.with(getContext())
                                 .load(R.drawable.added)
                                 .into(binding.buttonFavorite);
                         added = true;
@@ -452,7 +468,7 @@ public class DialogComida extends DialogFragment {
             }
             if (!added) {
                 Log.d(TAG, "Comida no está en favoritos (local)");
-                Glide.with(getContext()) // Usar getContext()
+                Glide.with(getContext())
                         .load(R.drawable.estrella)
                         .into(binding.buttonFavorite);
             }

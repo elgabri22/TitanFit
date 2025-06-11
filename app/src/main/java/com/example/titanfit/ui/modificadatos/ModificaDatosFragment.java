@@ -85,24 +85,28 @@ public class ModificaDatosFragment extends Fragment {
                     if (username.isEmpty()) {
                         tvUsernameError.setText("El nombre de usuario no puede estar vacío");
                         tvUsernameError.setVisibility(View.VISIBLE);
+                        num_clicks_save=0;
                         isValid = false;
                     }
 
                     if (email.isEmpty()) {
                         tvEmailError.setText("El correo electrónico no puede estar vacío");
                         tvEmailError.setVisibility(View.VISIBLE);
+                        num_clicks_save=0;
                         isValid = false;
                     }
 
                     if (password.isEmpty()) {
                         tvPasswordError.setText("La contraseña no puede estar vacía");
                         tvPasswordError.setVisibility(View.VISIBLE);
+                        num_clicks_save=0;
                         isValid = false;
                     }
 
                     if (repeatPassword.isEmpty()) {
                         tvRepeatPasswordError.setText("Repite la contraseña");
                         tvRepeatPasswordError.setVisibility(View.VISIBLE);
+                        num_clicks_save=0;
                         isValid = false;
                     }
 
@@ -110,6 +114,7 @@ public class ModificaDatosFragment extends Fragment {
                     if (!password.equals(repeatPassword)) {
                         tvRepeatPasswordError.setText("Las contraseñas no coinciden");
                         tvRepeatPasswordError.setVisibility(View.VISIBLE);
+                        num_clicks_save=0;
                         isValid = false;
                     }
 
@@ -144,6 +149,7 @@ public class ModificaDatosFragment extends Fragment {
 
                                     Toast.makeText(requireContext(), "Datos actualizados correctamente", Toast.LENGTH_SHORT).show();
                                 } else {
+                                    num_clicks_save=0;
                                     Toast.makeText(requireContext(), "Error al actualizar usuario: " + response.code(), Toast.LENGTH_SHORT).show();
                                 }
                             }
@@ -151,6 +157,7 @@ public class ModificaDatosFragment extends Fragment {
                             @Override
                             public void onFailure(Call<Void> call, Throwable t) {
                                 t.printStackTrace();
+                                num_clicks_save=0;
                                 Toast.makeText(getContext(), "Error de red", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -164,7 +171,6 @@ public class ModificaDatosFragment extends Fragment {
         binding.btnDeleteAccount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // *** COMIENZO DEL DIÁLOGO DE ALERTA ***
                 new AlertDialog.Builder(getContext())
                         .setTitle("Eliminar Cuenta") // Título del diálogo
                         .setMessage("¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.") // Mensaje
@@ -184,7 +190,6 @@ public class ModificaDatosFragment extends Fragment {
                         })
                         .setIcon(android.R.drawable.ic_dialog_alert) // Opcional: un icono de advertencia
                         .show();
-                // *** FIN DEL DIÁLOGO DE ALERTA ***
             }
         });
 

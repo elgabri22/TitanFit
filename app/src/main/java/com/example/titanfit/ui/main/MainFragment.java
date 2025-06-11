@@ -43,6 +43,7 @@ import com.example.titanfit.ui.dialogs.DialogAddComida;
 import com.example.titanfit.ui.dialogs.DialogComida;
 import com.example.titanfit.ui.dialogs.DialogFavoritos;
 import com.google.android.material.navigation.NavigationView; // Asegúrate de que esta clase existe si la usas en otro lado
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -69,8 +70,8 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
     private User usuario;
     private String fecha;
     private String currentMealScanning;
-    private static final String MEAL_TYPE_BREAKFAST = "breakfast";
-    private static final String MEAL_TYPE_LUNCH = "lunch";
+    private static final String MEAL_TYPE_BREAKFAST = "Desayuno";
+    private static final String MEAL_TYPE_LUNCH = "Almuerzo";
 
     // Variables para acumular las macros y calorías
     private int currentTotalCalories = 0;
@@ -117,30 +118,42 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
         binding.btnScanBarcodeBreakfast.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentMealScanning = MEAL_TYPE_BREAKFAST;
-                startBarcodeScanner();
+                int num_clicks=0;
+                if (num_clicks==0){
+                    currentMealScanning = MEAL_TYPE_BREAKFAST;
+                    startBarcodeScanner();
+                }
+                num_clicks++;
             }
         });
 
         binding.btnScanBarcodeLunch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                currentMealScanning = MEAL_TYPE_LUNCH;
-                startBarcodeScanner();
+                int num_clicks=0;
+                if (num_clicks==0){
+                    currentMealScanning = MEAL_TYPE_LUNCH;
+                    startBarcodeScanner();
+                }
+                num_clicks++;
             }
         });
 
         binding.fav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
-                User user=sharedPreferencesManager.getUser(); // Obtener el usuario actualizado
-                DialogFavoritos dialogFavoritos = new DialogFavoritos(user.getFavoritos().getComidas(), getParentFragmentManager(), MainFragment.this);
-                Bundle bundle=new Bundle();
-                bundle.putString("fecha",fecha);
-                bundle.putString("tipo","Desayuno"); // Considera hacer esto dinámico si tienes más tipos
-                dialogFavoritos.setArguments(bundle);
-                dialogFavoritos.show(getParentFragmentManager(), "DialogFavoritos");
+                int num_clicks=0;
+                if (num_clicks==0){
+                    SharedPreferencesManager sharedPreferencesManager=new SharedPreferencesManager(requireContext());
+                    User user=sharedPreferencesManager.getUser(); // Obtener el usuario actualizado
+                    DialogFavoritos dialogFavoritos = new DialogFavoritos(user.getFavoritos().getComidas(), getParentFragmentManager(), MainFragment.this);
+                    Bundle bundle=new Bundle();
+                    bundle.putString("fecha",fecha);
+                    bundle.putString("tipo","Desayuno"); // Considera hacer esto dinámico si tienes más tipos
+                    dialogFavoritos.setArguments(bundle);
+                    dialogFavoritos.show(getParentFragmentManager(), "DialogFavoritos");
+                }
+                num_clicks++;
             }
         });
 
@@ -164,8 +177,125 @@ public class MainFragment extends Fragment implements DialogComida.OnMealAddedLi
 
                 Log.d(TAG, "Contenido del código: " + barcodeContent);
                 Log.d(TAG, "Formato: " + formatName);
+                ApiServiceFood api = ApiClient.getClient().create(ApiServiceFood.class);
+
+                Call<JsonElement> call = api.getProductByBarcode(barcodeContent);
+
+                call.enqueue(new Callback<JsonElement>() {
+                    @Override
+                    public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            JsonElement jsonElement = response.body();
+                            Log.d(TAG, "Respuesta de OpenFoodFacts: " + jsonElement.toString());
+
+                            // ✅ Procesar el JSON adaptado a OpenFoodFacts
+                            Food scannedFood = parseOpenFoodFactsResponse(jsonElement);
+
+                            if (scannedFood != null) {
+                                DialogComida dialogComida = DialogComida.newInstance(scannedFood, currentMealScanning, fecha);
+                                dialogComida.setOnMealAddedListener(MainFragment.this);
+                                dialogComida.show(getParentFragmentManager(), "DialogComida");
+                            } else {
+                                Toast.makeText(getContext(), "No se encontró información del alimento para este código de barras.", Toast.LENGTH_LONG).show();
+                                Log.e(TAG, "No se pudo parsear el objeto Food desde OpenFoodFacts.");
+                            }
+
+                        } else {
+                            Log.e(TAG, "Error en la respuesta de OpenFoodFacts: " + response.code() + " - " + response.message());
+                            Toast.makeText(getContext(), "Error al obtener datos del alimento. Código: " + response.code(), Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<JsonElement> call, Throwable t) {
+                        Log.e(TAG, "Fallo en la llamada a OpenFoodFacts: " + t.getMessage(), t);
+                        Toast.makeText(getContext(), "Error de red al escanear: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+                Toast.makeText(requireContext(),barcodeContent,Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    private Food parseOpenFoodFactsResponse(JsonElement json) {
+        try {
+            JsonObject root = json.getAsJsonObject();
+
+            // Verifica que el producto exista
+            if (!root.has("status") || root.get("status").getAsInt() != 1) {
+                return null;
+            }
+
+            JsonObject product = root.getAsJsonObject("product");
+
+            // Obtener campos básicos
+            String name = product.has("product_name") ? product.get("product_name").getAsString() : "Producto sin nombre";
+            String imagen = product.has("image_url") ? product.get("image_url").getAsString() : "";
+            String tipo = product.has("categories") ? product.get("categories").getAsString() : "Sin categoría";
+
+            JsonObject nutriments = product.getAsJsonObject("nutriments");
+
+            int calories = nutriments.has("energy-kcal_100g") ? nutriments.get("energy-kcal_100g").getAsInt() : 0;
+            double protein = nutriments.has("proteins_100g") ? nutriments.get("proteins_100g").getAsDouble() : 0.0;
+            double carbs = nutriments.has("carbohydrates_100g") ? nutriments.get("carbohydrates_100g").getAsDouble() : 0.0;
+            double fats = nutriments.has("fat_100g") ? nutriments.get("fat_100g").getAsDouble() : 0.0;
+
+            // Crear objeto Food
+            Food food = new Food(name, calories, protein, carbs, fats, imagen, tipo);
+
+            // Usar el código de barras como ID (opcional)
+            if (root.has("code")) {
+                food.setId(root.get("code").getAsString());
+            }
+
+            return food;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error al parsear JSON de OpenFoodFacts", e);
+            return null;
+        }
+    }
+
+
+
+    private Food parseNutrionixResponse(JsonElement jsonElement) {
+        try {
+            JsonObject responseObject = jsonElement.getAsJsonObject();
+            if (responseObject.has("foods")) {
+                JsonArray foodsArray = responseObject.getAsJsonArray("foods");
+                if (foodsArray.size() > 0) {
+                    JsonObject foodJson = foodsArray.get(0).getAsJsonObject(); // Tomamos el primer alimento
+
+                    String name = foodJson.has("food_name") ? foodJson.get("food_name").getAsString() : "Nombre desconocido";
+                    int calories = foodJson.has("nf_calories") && !foodJson.get("nf_calories").isJsonNull() ? foodJson.get("nf_calories").getAsInt() : 0;
+                    double protein = foodJson.has("nf_protein") && !foodJson.get("nf_protein").isJsonNull() ? foodJson.get("nf_protein").getAsDouble() : 0.0;
+                    double carbs = foodJson.has("nf_total_carbohydrate") && !foodJson.get("nf_total_carbohydrate").isJsonNull() ? foodJson.get("nf_total_carbohydrate").getAsDouble() : 0.0;
+                    double fats = foodJson.has("nf_total_fat") && !foodJson.get("nf_total_fat").isJsonNull() ? foodJson.get("nf_total_fat").getAsDouble() : 0.0;
+
+                    String imageUrl = null;
+                    if (foodJson.has("photo") && foodJson.get("photo").isJsonObject()) {
+                        JsonObject photoObject = foodJson.getAsJsonObject("photo");
+                        if (photoObject.has("thumb") && !photoObject.get("thumb").isJsonNull()) {
+                            imageUrl = photoObject.get("thumb").getAsString();
+                        }
+                    }
+
+                    // Puedes generar un ID temporal o dejarlo en null para que tu backend lo genere
+                    Food food = new Food(name, calories, protein, carbs, fats, imageUrl, ""); // El tipo se asignará al añadirlo como Meal
+
+                    // Asigna un ID si existe en la respuesta de Nutrionix para un seguimiento,
+                    // aunque tu clase Food tiene un @SerializedName("id") diferente.
+                    // Para Nutrionix, no hay un "id" directo que corresponda a tu `id` de Food.
+                    // Podrías usar un UUID o algún otro identificador si lo necesitas.
+                    // food.setId(UUID.randomUUID().toString()); // Ejemplo si necesitas un ID único
+
+                    return food;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error al parsear la respuesta JSON de Nutrionix: " + e.getMessage(), e);
+        }
+        return null;
     }
 
     private void startBarcodeScanner() {

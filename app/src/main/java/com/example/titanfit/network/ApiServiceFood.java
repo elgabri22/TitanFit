@@ -17,13 +17,20 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface ApiServiceFood {
-    @POST("https://trackapi.nutritionix.com/v2/natural/nutrients")
-    Call<JsonElement> getFoods(@Header("x-app-id") String appId,
-                               @Header("x-app-key") String appKey,
-                               @Body RequestBody body);
+    @GET("https://world.openfoodfacts.org/cgi/search.pl") // Este es el endpoint de búsqueda general de Open Food Facts
+    Call<JsonElement> getFoodsOpenFoodFactsByText(
+            @Query("search_terms") String query, // El término de búsqueda
+            @Query("json") int jsonFormat // Para que la respuesta sea JSON (valor 1)
+    );
+
 
     @POST("/delete/meal/{id}")
     Call<Void> deleteMeal(@Path ("id")String id);
+
+    @GET("https://world.openfoodfacts.org/api/v0/product/{barcode}.json")
+    Call<JsonElement> getProductByBarcode(
+            @Path("barcode") String barcode
+    );
 
     @POST("/add/meal")
     Call<JsonElement> addMeal(@Body RequestBody body);

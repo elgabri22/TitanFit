@@ -136,72 +136,97 @@ public class DialogAddComida extends DialogFragment {
         jsonObject.addProperty("query", comida);
         Log.d(TAG, "Enviando JSON Body: " + jsonObject.toString());
 
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), jsonObject.toString());
-        Call<JsonElement> call = apiService.getFoods("655d5ed6", "e26f024577ee0c93c3383d9ff0cdb948", requestBody);
+        Call<JsonElement> call = apiService.getFoodsOpenFoodFactsByText(comida, 1); // 'query' es el texto de búsqueda, '1' para JSON
 
         call.enqueue(new Callback<JsonElement>() {
             @Override
             public void onResponse(Call<JsonElement> call, Response<JsonElement> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonElement rawResponse = response.body();
-                    Log.d(TAG, "Respuesta completa: " + rawResponse.toString());
+                    Log.d(TAG, "Respuesta Open Food Facts (texto): " + rawResponse.toString());
 
                     if (rawResponse.isJsonObject()) {
                         JsonObject jsonObject = rawResponse.getAsJsonObject();
-                        if (jsonObject.has("foods") && jsonObject.get("foods").isJsonArray()) {
-                            comidas.clear();
-                            JsonArray foodsArray = jsonObject.getAsJsonArray("foods");
-                            for (JsonElement hintElement : foodsArray) {
-                                if (hintElement.isJsonObject()) {
-                                    JsonObject hintObject = hintElement.getAsJsonObject();
-                                    String name = hintObject.has("food_name") && !hintObject.get("food_name").isJsonNull()
-                                            ? hintObject.get("food_name").getAsString() : "N/A";
+                        // La búsqueda por texto de Open Food Facts devuelve un array "products"
+                        if (jsonObject.has("products") && jsonObject.get("products").isJsonArray()) {
+                            comidas.clear(); // Limpia la lista de comidas existente
+                            JsonArray productsArray = jsonObject.getAsJsonArray("products");
 
-                                    int calories = 0;
-                                    if (hintObject.has("nf_calories") && !hintObject.get("nf_calories").isJsonNull()) {
-                                        try {
-                                            calories = (int) Math.round(hintObject.get("nf_calories").getAsDouble());
-                                        } catch (Exception e) {
-                                            Log.w(TAG, "Error al convertir calorías: " + e.getMessage());
+                            if (productsArray.size() > 0) {
+                                for (JsonElement productElement : productsArray) {
+                                    if (productElement.isJsonObject()) {
+                                        JsonObject productObject = productElement.getAsJsonObject();
+
+                                        String name = productObject.has("product_name") && !productObject.get("product_name").isJsonNull()
+                                                ? productObject.get("product_name").getAsString() : "Nombre desconocido";
+
+                                        String imageUrl = productObject.has("image_url") && !productObject.get("image_url").isJsonNull()
+                                                ? productObject.get("image_url").getAsString() : "";
+
+                                        // Valores por 100g (nutriments)
+                                        double calories = 0.0;
+                                        double protein = 0.0;
+                                        double carbs = 0.0;
+                                        double fats = 0.0;
+
+                                        if (productObject.has("nutriments") && productObject.get("nutriments").isJsonObject()) {
+                                            JsonObject nutriments = productObject.getAsJsonObject("nutriments");
+
+                                            calories = nutriments.has("energy-kcal_100g") && !nutriments.get("energy-kcal_100g").isJsonNull()
+                                                    ? nutriments.get("energy-kcal_100g").getAsDouble() : 0.0;
+                                            protein = nutriments.has("proteins_100g") && !nutriments.get("proteins_100g").isJsonNull()
+                                                    ? nutriments.get("proteins_100g").getAsDouble() : 0.0;
+                                            carbs = nutriments.has("carbohydrates_100g") && !nutriments.get("carbohydrates_100g").isJsonNull()
+                                                    ? nutriments.get("carbohydrates_100g").getAsDouble() : 0.0;
+                                            fats = nutriments.has("fat_100g") && !nutriments.get("fat_100g").isJsonNull()
+                                                    ? nutriments.get("fat_100g").getAsDouble() : 0.0;
                                         }
+
+                                        // Open Food Facts no tiene un "tipo" de alimento directo como Nutrionix.
+                                        // Puedes intentar inferirlo de las categorías o tags si lo necesitas,
+                                        // o simplemente dejarlo como "Otro" o "Desconocido".
+                                        String tipo = "Otro"; // O un mapeo más complejo si lo desarrollas
+
+                                        Food food = new Food(name, (int) Math.round(calories), protein, carbs, fats, imageUrl, tipo);
+                                        comidas.add(food);
                                     }
-
-                                    double proteinas = hintObject.has("nf_protein") && !hintObject.get("nf_protein").isJsonNull()
-                                            ? hintObject.get("nf_protein").getAsDouble() : 0.0;
-                                    double carbs = hintObject.has("nf_total_carbohydrate") && !hintObject.get("nf_total_carbohydrate").isJsonNull()
-                                            ? hintObject.get("nf_total_carbohydrate").getAsDouble() : 0.0;
-                                    double fats = hintObject.has("nf_total_fat") && !hintObject.get("nf_total_fat").isJsonNull()
-                                            ? hintObject.get("nf_total_fat").getAsDouble() : 0.0;
-
-                                    String foto = hintObject.has("photo") && hintObject.get("photo").isJsonObject()
-                                            && hintObject.getAsJsonObject("photo").has("thumb")
-                                            && !hintObject.getAsJsonObject("photo").get("thumb").isJsonNull()
-                                            ? hintObject.getAsJsonObject("photo").get("thumb").getAsString() : "";
-
-                                    String tipo = "Desconocido";
-                                    if (hintObject.has("tags") && hintObject.get("tags").isJsonObject()) {
-                                        JsonObject tagsJson = hintObject.getAsJsonObject("tags");
-                                        if (tagsJson.has("food_group") && !tagsJson.get("food_group").isJsonNull()) {
-                                            int tipoComida = tagsJson.get("food_group").getAsInt();
-                                            tipo = tipos.getOrDefault(tipoComida, "Otro");
-                                        }
+                                }
+                                if (getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> adapter.actualizarLista(comidas));
+                                }
+                                if (comidas.isEmpty()) {
+                                    if (getActivity() != null) {
+                                        getActivity().runOnUiThread(() ->
+                                                Toast.makeText(getContext(), "No se encontraron resultados para su búsqueda.", Toast.LENGTH_SHORT).show());
                                     }
-
-                                    Food food = new Food(name, calories, proteinas, carbs, fats, foto, tipo);
-                                    comidas.add(food);
+                                }
+                            } else {
+                                Log.w(TAG, "No se encontraron productos en la respuesta de Open Food Facts.");
+                                if (getActivity() != null) {
+                                    getActivity().runOnUiThread(() ->
+                                            Toast.makeText(getContext(), "No se encontraron resultados para su búsqueda.", Toast.LENGTH_SHORT).show());
+                                }
+                                comidas.clear(); // Asegúrate de limpiar la lista si no hay resultados
+                                if (getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> adapter.actualizarLista(comidas));
                                 }
                             }
-                            if (getActivity() != null) {
-                                getActivity().runOnUiThread(() -> adapter.actualizarLista(comidas));
-                            }
                         } else {
-                            Log.w(TAG, "La respuesta JSON no contiene un array 'foods'.");
+                            Log.w(TAG, "La respuesta JSON de Open Food Facts no contiene un array 'products'.");
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() ->
+                                        Toast.makeText(getContext(), "Error en el formato de la respuesta de la API.", Toast.LENGTH_SHORT).show());
+                            }
                         }
                     } else {
                         Log.w(TAG, "La respuesta no es un objeto JSON principal.");
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() ->
+                                    Toast.makeText(getContext(), "Respuesta inválida del servidor.", Toast.LENGTH_SHORT).show());
+                        }
                     }
                 } else {
-                    Log.e(TAG, "La llamada a la API falló: " + response.code() + " - " + response.message());
+                    Log.e(TAG, "La llamada a la API de Open Food Facts falló: " + response.code() + " - " + response.message());
                     try {
                         if (response.errorBody() != null) {
                             Log.e(TAG, "Cuerpo de error: " + response.errorBody().string());
@@ -209,12 +234,16 @@ public class DialogAddComida extends DialogFragment {
                     } catch (IOException e) {
                         Log.e(TAG, "Error al leer el cuerpo de error: " + e.getMessage());
                     }
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() ->
+                                Toast.makeText(getContext(), "Error en la llamada a la API: " + response.message(), Toast.LENGTH_SHORT).show());
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<JsonElement> call, Throwable t) {
-                Log.e(TAG, "Error de red o fallo de la llamada: " + t.getMessage(), t);
+                Log.e(TAG, "Error de red o fallo de la llamada a Open Food Facts: " + t.getMessage(), t);
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() ->
                             Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_SHORT).show());
